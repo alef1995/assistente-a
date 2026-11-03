@@ -1,0 +1,60 @@
+name: Compilar APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o repositorio
+        uses: actions/checkout@v4
+
+      - name: Abrir o zip do projeto
+        run: |
+          for f in *.zip; do unzip -q -o "$f"; done
+          ls -la assistente-a
+
+      - name: Instalar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Preparar Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Testar e compilar o APK
+        working-directory: assistente-a
+        run: |
+          chmod +x gradlew
+          ./gradlew testDebugUnitTest assembleDebug --stacktrace
+          cp app/build/outputs/apk/debug/app-debug.apk ../AssistenteA.apk
+
+      - name: Guardar o APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AssistenteA-apk
+          path: AssistenteA.apk
+
+      - name: Atualizar etiqueta latest
+        run: |
+          git tag -f latest
+          git push -f origin latest
+
+      - name: Publicar o APK para baixar no celular
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "Assistente A - versao ${{ github.run_number }}"
+          make_latest: true
+          files: AssistenteA.apk
