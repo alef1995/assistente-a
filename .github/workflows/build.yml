@@ -1,12 +1,13 @@
 name: Compilar APK
 
+# Roda a cada envio para a branch main, ou manualmente pela aba "Actions".
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: write   # necessário para publicar o APK na página de Releases
 
 concurrency:
   group: build-apk
@@ -19,10 +20,26 @@ jobs:
       - name: Baixar o repositorio
         uses: actions/checkout@v4
 
-      - name: Abrir o zip do projeto
+      # Atualização enviada como um único arquivo (projeto.b64): extrai o código
+      # direto no repositório, para que as próximas mudanças sejam feitas arquivo por arquivo.
+      - name: Extrair codigo enviado
         run: |
-          for f in *.zip; do unzip -q -o "$f"; done
-          ls -la assistente-a
+          if [ -f projeto.b64 ]; then
+            base64 -d projeto.b64 > /tmp/projeto.tgz
+            git rm -q --ignore-unmatch projeto.b64
+            git rm -q --ignore-unmatch -- *.zip || true
+            rm -rf assistente-a
+            tar -xzf /tmp/projeto.tgz
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -q -m "Extrai o codigo do projeto no repositorio"
+            git push origin HEAD:main
+          elif [ ! -f settings.gradle.kts ]; then
+            # Versão antiga: projeto dentro de um .zip
+            for f in *.zip; do unzip -q -o "$f"; done
+            cp -a assistente-a/. .
+          fi
 
       - name: Instalar Java 17
         uses: actions/setup-java@v4
@@ -30,31 +47,34 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Preparar Gradle
+      - name: Preparar Gradle (com cache)
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Testar e compilar o APK
-        working-directory: assistente-a
+      - name: Testar o interpretador de comandos e compilar o APK
         run: |
           chmod +x gradlew
           ./gradlew testDebugUnitTest assembleDebug --stacktrace
-          cp app/build/outputs/apk/debug/app-debug.apk ../AssistenteA.apk
+          cp app/build/outputs/apk/debug/app-debug.apk AssistenteA.apk
 
-      - name: Guardar o APK
+      - name: Guardar o APK nesta execucao
         uses: actions/upload-artifact@v4
         with:
           name: AssistenteA-apk
           path: AssistenteA.apk
 
-      - name: Atualizar etiqueta latest
+      - name: Mover a etiqueta latest para esta versao
         run: |
           git tag -f latest
           git push -f origin latest
 
-      - name: Publicar o APK para baixar no celular
+      - name: Publicar na pagina de Releases (link fixo para baixar no celular)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
           name: "Assistente A - versao ${{ github.run_number }}"
           make_latest: true
           files: AssistenteA.apk
+          body: |
+            **Baixe no celular:** toque em `AssistenteA.apk` abaixo.
+
+            Para atualizar, basta instalar por cima da versão anterior.
