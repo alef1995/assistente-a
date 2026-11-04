@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.A" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@drawable/bg_app</item>
+        <item name="android:statusBarColor">@color/bg_top</item>
+        <item name="android:navigationBarColor">@color/bg_bottom</item>
+        <item name="android:colorAccent">@color/purple</item>
+        <item name="android:colorPrimary">@color/purple</item>
+        <item name="android:textColorPrimary">@color/text</item>
+        <item name="android:textColorSecondary">@color/text_dim</item>
+    </style>
+
+    <!-- Tela invisível que só liga o serviço (StartActivity) -->
+    <style name="Theme.A.Invisible" parent="@android:style/Theme.Translucent.NoTitleBar">
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+</resources>

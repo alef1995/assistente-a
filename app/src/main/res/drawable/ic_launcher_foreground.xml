@@ -1,0 +1,10 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Letra "A" estilizada -->
+    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd"
+        android:pathData="M54,32 L73,76 L65,76 L60.7,66 L47.3,66 L43,76 L35,76 Z M50,59.5 L58,59.5 L54,50 Z" />
+    <!-- Pontinho azul (indicador de voz) -->
+    <path android:fillColor="#FF00B8FF"
+        android:pathData="M74,36 m-4,0 a4,4 0,1 1,8 0 a4,4 0,1 1,-8 0" />
+</vector>

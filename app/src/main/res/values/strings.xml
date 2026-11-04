@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">A</string>
+    <string name="status_idle">Toque no microfone e fale</string>
+    <string name="status_listening">Ouvindo…</string>
+    <string name="status_processing">Entendendo…</string>
+    <string name="status_speaking">Falando…</string>
+    <string name="nothing_playing">Nada tocando no momento</string>
+    <string name="continuous_mode">Escuta contínua (diga \"A, …\")</string>
+    <string name="grant_media_access">Permitir mostrar a música atual</string>
+    <string name="examples">Exemplos: \"tocar Matuê\" · \"músicas do Henrique e Juliano\" · \"próxima\" · \"pausar\" · \"volume 50%\" · \"que horas são?\" · \"timer de 5 minutos\" · \"despertador às 7\" · \"liga a lanterna\" · \"abrir WhatsApp\" · \"conta uma piada\" · \"pode parar de ouvir\"</string>
+    <string name="continuous_hint">Funciona com a tela apagada. Uma notificação fixa mostra que a A está ouvindo.</string>
+    <string name="auto_bluetooth">Ligar sozinha com a caixa Bluetooth</string>
+    <string name="auto_bluetooth_hint">Conectou a caixa → a A começa a ouvir. Desconectou → para, e poupa a bateria.</string>
+    <string name="speaker_mic">Ouvir pelo microfone da caixa (experimental)</string>
+    <string name="speaker_mic_hint">Só para caixas com microfone. Enquanto a A ouve por ela, o som fica com qualidade de ligação.</string>
+    <string name="wake_beep">Bipe ao ser chamada</string>
+    <string name="grant_overlay">Permitir que a A ligue sozinha (exibir sobre outros apps)</string>
+    <string name="set_assistant">Usar a A como assistente do celular</string>
+    <string name="widget_label">Falar com a A</string>
+    <string name="shortcut_talk">Falar com a A</string>
+    <string name="shortcut_listen">Ouvir sempre</string>
+    <string name="cd_mic">Falar com a A</string>
+    <string name="cd_prev">Música anterior</string>
+    <string name="cd_play_pause">Tocar ou pausar</string>
+    <string name="cd_next">Próxima música</string>
+    <string name="cd_vol_up">Aumentar volume</string>
+    <string name="cd_vol_down">Diminuir volume</string>
+</resources>

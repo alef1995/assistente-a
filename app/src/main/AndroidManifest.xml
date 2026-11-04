@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Microfone para ouvir os comandos -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Ajustar o volume de mídia e usar o microfone da caixa Bluetooth -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <!-- Continuar ouvindo com a tela apagada (serviço em primeiro plano com microfone) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Perceber quando a caixa Bluetooth conecta/desconecta -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!-- Ligar sozinha e abrir apps/música com a A em segundo plano -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- Timer e despertador no app Relógio -->
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+
+    <!-- Android 11+: declarar quais apps/serviços externos o app precisa enxergar -->
+    <queries>
+        <!-- Reconhecimento de voz do sistema (Google) -->
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <!-- Motores de voz (Text-to-Speech) -->
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+        <!-- Apps de música que aceitam "tocar a partir de uma busca" -->
+        <intent>
+            <action android:name="android.media.action.MEDIA_PLAY_FROM_SEARCH" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="spotify" />
+        </intent>
+        <!-- "abrir WhatsApp": lista os apps instalados -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <!-- Timer e despertador -->
+        <intent>
+            <action android:name="android.intent.action.SET_TIMER" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SET_ALARM" />
+        </intent>
+        <package android:name="com.spotify.music" />
+        <package android:name="com.google.android.apps.youtube.music" />
+        <package android:name="deezer.android.app" />
+        <package android:name="com.amazon.mp3" />
+    </queries>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.A">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
+        </activity>
+
+        <!--
+            Tela invisível que liga a A: atalhos, botão de assistente do celular
+            (segurar o botão de início), botão de voz de fones/caixas Bluetooth.
+        -->
+        <activity
+            android:name=".service.StartActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:launchMode="singleInstance"
+            android:noHistory="true"
+            android:showWhenLocked="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.A.Invisible">
+            <intent-filter>
+                <action android:name="android.intent.action.ASSIST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VOICE_COMMAND" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.alef.assistentea.LISTEN" />
+                <action android:name="com.alef.assistentea.TOGGLE_CONTINUOUS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- O "cérebro" da A, que continua ouvindo com a tela apagada -->
+        <service
+            android:name=".service.AssistantService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
+
+        <!-- Caixa Bluetooth conectou/desconectou -->
+        <receiver
+            android:name=".service.BluetoothReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
+                <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Widget da tela inicial -->
+        <receiver
+            android:name=".widget.MicWidget"
+            android:exported="true"
+            android:label="@string/widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_mic_info" />
+        </receiver>
+
+        <!--
+            Serviço opcional. Quando o usuário concede "Acesso a notificações",
+            o Android permite que o app veja qual música está tocando
+            (título/artista) e controle o player diretamente.
+        -->
+        <service
+            android:name=".media.MediaListenerService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+    </application>
+</manifest>
