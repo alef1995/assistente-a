@@ -16,7 +16,7 @@ import com.alef.assistentea.voice.SpeechListener
 import com.alef.assistentea.voice.WakeWordDetector
 
 /**
- * O "cérebro" da A: ouve, entende, executa e responde.
+ * O "cérebro" da Alexa: ouve, entende, executa e responde.
  *
  * Roda dentro do [com.alef.assistentea.service.AssistantService] (serviço em primeiro plano),
  * então continua funcionando com a tela apagada ou com outro app aberto.
@@ -63,7 +63,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
     private val music = MusicLauncher(context)
     private val device = DeviceActions(context)
     private val btMic = BluetoothMic(context)
-    private val wake = WakeWordDetector(context) { onWakeText(it) }
+    private val wake = WakeWordDetector(context) { text, final -> onWakeText(text, final) }
 
     var state = State.IDLE
         private set
@@ -140,11 +140,12 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         errorsInARow = 0
         host.onContinuousChanged(on)
         if (on) {
-            showReply("Escuta contínua ligada. Comece a frase com \"A\". Ex.: \"A, pausar\".")
+            showReply("Escuta contínua ligada. Comece a frase com \"Alexa\". Ex.: \"Alexa, pausar\".")
             main.removeCallbacks(idleCheck)
             if (state == State.IDLE) main.postDelayed(relisten, 300)
         } else {
             main.removeCallbacks(relisten)
+            main.removeCallbacks(wakeTrigger)
             wake.stop()
             if (speech.isListening) {
                 speech.cancel()
@@ -212,21 +213,38 @@ class AssistantEngine(private val context: Context, private val host: Host) :
 
     // ================================================================== "A" e "Oi"
 
-    /** Texto ouvido pelo reconhecedor offline enquanto espera o "A". */
-    private fun onWakeText(text: String) {
+    /** Disparo do "Oi" logo depois de ouvir só "Alexa" (sem esperar o silêncio). */
+    private val wakeTrigger = Runnable {
+        if (continuous && state == State.IDLE && wake.isRunning) {
+            wake.stop()
+            greetAndListen()
+        }
+    }
+
+    /** Texto ouvido pelo reconhecedor offline enquanto espera "Alexa". */
+    private fun onWakeText(text: String, final: Boolean) {
         if (text.isEmpty() && wake.failed) {
-            // O reconhecedor offline falhou: continua esperando o "A" com o Google
+            // O reconhecedor offline falhou: continua esperando "Alexa" com o Google
             main.postDelayed(relisten, 500)
             return
         }
         if (!continuous || state != State.IDLE || speech.isListening || speaker.isSpeaking) return
-        val r = CommandParser.parse(text)
-        if (!r.hadWakeWord) return // conversa ou música: ignora e continua tocando normalmente
-        when (val cmd = r.command) {
-            Command.WakeOnly, is Command.Play -> { wake.stop(); greetAndListen() }
-            is Command.Unknown -> return // "a vida é bela" na letra da música: não é com a A
+        // Conversa ou música sem o nome: ignora e a música continua normalmente
+        val rest = CommandParser.findWake(text) ?: return
+        if (rest.isBlank()) {
+            // Só "Alexa": responde rápido, sem esperar a pessoa ficar em silêncio
+            main.removeCallbacks(wakeTrigger)
+            if (final) wakeTrigger.run() else main.postDelayed(wakeTrigger, 350)
+            return
+        }
+        // "Alexa, pausar" de uma vez: espera a frase terminar
+        main.removeCallbacks(wakeTrigger)
+        if (!final) return
+        wake.stop()
+        when (val cmd = CommandParser.parse(rest).command) {
+            is Command.Play -> greetAndListen("Oi! Qual música?") // nomes de músicas: melhor ouvir com o Google
+            is Command.Unknown, Command.WakeOnly -> greetAndListen()
             else -> {
-                wake.stop()
                 setState(State.PROCESSING)
                 execute(cmd)
             }
@@ -234,9 +252,10 @@ class AssistantEngine(private val context: Context, private val host: Host) :
     }
 
     /** "Oi, boa noite!" e escuta o pedido (a música abaixa só agora). */
-    private fun greetAndListen() {
+    private fun greetAndListen(text: String = greetingShort()) {
+        main.removeCallbacks(wakeTrigger)
         setState(State.PROCESSING)
-        reply(greetingShort()) {
+        reply(text) {
             afterGreeting = true
             startListening(manual = true)
         }
@@ -300,14 +319,14 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         restoreDuck()
         setState(State.IDLE)
         if (code == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) {
-            showReply("O Android bloqueou o microfone. Abra a A para liberar.", error = true)
+            showReply("O Android bloqueou o microfone. Abra a Alexa para liberar.", error = true)
             if (continuous) setContinuous(false)
             host.onMicBlocked()
             return
         }
         if (continuous && silent) {
             // Ninguém falou (inclusive depois do "Oi"): volta a esperar o "A", sem falar nada
-            if (manualTrigger) showReply("Não ouvi nada. Diga \"A\" quando quiser.")
+            if (manualTrigger) showReply("Não ouvi nada. Diga \"Alexa\" quando quiser.")
             main.postDelayed(relisten, 300)
             return
         }
@@ -359,7 +378,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
                 when {
                     t != null -> reply("Está tocando ${t.title}" + (t.artist?.let { ", de $it" } ?: "") + ".")
                     !media.hasNotificationAccess() ->
-                        reply("Para eu saber o nome da música, abra a A e toque em \"Permitir mostrar a música atual\".")
+                        reply("Para eu saber o nome da música, abra a Alexa e toque em \"Permitir mostrar a música atual\".")
                     else -> reply("Não tem nenhuma música tocando agora.")
                 }
             }

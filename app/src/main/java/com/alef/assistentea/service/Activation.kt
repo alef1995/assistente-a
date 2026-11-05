@@ -11,13 +11,13 @@ import android.provider.Settings
 import com.alef.assistentea.R
 
 /**
- * Liga a A "sozinha" (ex.: quando a caixa Bluetooth conecta).
+ * Liga a Alexa "sozinha" (ex.: quando a caixa Bluetooth conecta).
  *
  * Desde o Android 11, um app em segundo plano não pode começar a usar o microfone por conta própria.
  * As saídas permitidas pelo Android são:
  *  1. Com a permissão "Exibir sobre outros apps", abrir por um instante uma tela invisível
  *     ([StartActivity]) que liga o serviço — totalmente automático;
- *  2. Sem ela, mostrar uma notificação: um toque e a A começa a ouvir.
+ *  2. Sem ela, mostrar uma notificação: um toque e a Alexa começa a ouvir.
  */
 object Activation {
 
@@ -37,7 +37,7 @@ object Activation {
                 // cai para a notificação
             }
         }
-        notifyTapToActivate(context, "Caixa conectada. Toque aqui para a A começar a ouvir.", action)
+        notifyTapToActivate(context, "Caixa conectada. Toque aqui para a Alexa começar a ouvir.", action)
     }
 
     fun notifyTapToActivate(
@@ -52,12 +52,12 @@ object Activation {
         val tap = AssistantService.pending(context, action, 21)
         val n = Notification.Builder(context, AssistantService.CHANNEL_ALERTS)
             .setSmallIcon(R.drawable.ic_mic)
-            .setContentTitle("A")
+            .setContentTitle("Alexa")
             .setContentText(text)
             .setContentIntent(tap)
             .setAutoCancel(true)
             .setTimeoutAfter(10 * 60 * 1000L)
-            .addAction(Notification.Action.Builder(null, "Ativar a A", tap).build())
+            .addAction(Notification.Action.Builder(null, "Ativar a Alexa", tap).build())
             .build()
         context.getSystemService(NotificationManager::class.java).notify(AssistantService.NOTIF_ACTIVATE, n)
     }

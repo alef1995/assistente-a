@@ -17,6 +17,11 @@ android {
         targetSdk = 35
         versionCode = buildNumber
         versionName = "0.1.$buildNumber"
+
+        // Só processadores de celulares (deixa o APK bem menor)
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+        }
     }
 
     // Chave fixa de depuração guardada no repositório: todas as compilações

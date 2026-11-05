@@ -7,10 +7,10 @@ import android.os.Handler
 import android.os.Looper
 
 /**
- * Tela invisível que só liga o serviço da A e fecha.
+ * Tela invisível que só liga o serviço da Alexa e fecha.
  *
  * Usada por: atalhos do ícone, botão "assistente" do celular (segurar o botão home/power,
- * se a A for escolhida como app assistente), botão de voz de fones Bluetooth e conexão da caixa.
+ * se a Alexa for escolhida como app assistente), botão de voz de fones Bluetooth e conexão da caixa.
  * Ligar o serviço com uma tela visível é o que o Android exige para liberar o microfone.
  */
 class StartActivity : Activity() {

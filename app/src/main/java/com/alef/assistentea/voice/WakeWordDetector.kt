@@ -21,7 +21,8 @@ import org.vosk.android.StorageService
  * Ele só serve para perceber o "A". O pedido em si continua com o Google, que entende melhor
  * nomes de músicas e artistas.
  */
-class WakeWordDetector(private val context: Context, private val onText: (String) -> Unit) {
+/** [onText] recebe o texto ouvido e se é o resultado final da frase (false = parcial, ainda falando). */
+class WakeWordDetector(private val context: Context, private val onText: (String, Boolean) -> Unit) {
 
     private val main = Handler(Looper.getMainLooper())
     private var model: Model? = null
@@ -29,7 +30,7 @@ class WakeWordDetector(private val context: Context, private val onText: (String
     private var service: SpeechService? = null
     private var loading = false
 
-    /** O modelo não pôde ser carregado: a A volta a usar o Google para esperar o "A". */
+    /** O modelo não pôde ser carregado: a Alexa volta a usar o Google para esperar o "A". */
     var failed = false
         private set
 
@@ -67,6 +68,7 @@ class WakeWordDetector(private val context: Context, private val onText: (String
         return try {
             val rec = Recognizer(m, 16000.0f)
             val s = SpeechService(rec, 16000.0f)
+            lastPartial = ""
             s.startListening(listener)
             recognizer = rec
             service = s
@@ -94,30 +96,38 @@ class WakeWordDetector(private val context: Context, private val onText: (String
     }
 
     private val listener = object : RecognitionListener {
-        override fun onPartialResult(hypothesis: String?) {}
+        override fun onPartialResult(hypothesis: String?) = deliver(hypothesis, "partial", false)
 
-        override fun onResult(hypothesis: String?) = deliver(hypothesis)
+        override fun onResult(hypothesis: String?) = deliver(hypothesis, "text", true)
 
-        override fun onFinalResult(hypothesis: String?) = deliver(hypothesis)
+        override fun onFinalResult(hypothesis: String?) = deliver(hypothesis, "text", true)
 
         override fun onError(exception: Exception?) {
             main.post {
                 stop()
                 failed = true
-                onText("")
+                onText("", true)
             }
         }
 
         override fun onTimeout() {}
     }
 
-    private fun deliver(json: String?) {
+    private var lastPartial = ""
+
+    private fun deliver(json: String?, key: String, final: Boolean) {
         val text = try {
-            JSONObject(json ?: return).optString("text")
+            JSONObject(json ?: return).optString(key)
         } catch (_: Exception) {
             return
         }
         if (text.isBlank()) return
-        main.post { if (service != null) onText(text) }
+        if (!final) {
+            if (text == lastPartial) return // o Vosk repete o mesmo parcial várias vezes
+            lastPartial = text
+        } else {
+            lastPartial = ""
+        }
+        main.post { if (service != null) onText(text, final) }
     }
 }

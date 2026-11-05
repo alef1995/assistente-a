@@ -135,17 +135,17 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         }
 
         mediaAccessButton.setOnClickListener {
-            onReply("Ative a \"A\" na lista e volte para o app.", false)
+            onReply("Ative a \"Alexa\" na lista e volte para o app.", false)
             openSettings(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
         }
 
         overlayButton.setOnClickListener {
-            onReply("Ative \"Permitir exibição sobre outros apps\" para a A e volte.", false)
+            onReply("Ative \"Permitir exibição sobre outros apps\" para a Alexa e volte.", false)
             openSettings(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
         }
 
         findViewById<TextView>(R.id.assistantButton).setOnClickListener {
-            onReply("Em \"App assistente\" (ou \"Assistente digital\"), escolha a A. " +
+            onReply("Em \"App assistente\" (ou \"Assistente digital\"), escolha a Alexa. " +
                 "Depois é só segurar o botão de início para chamá-la.", false)
             openSettings(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS))
         }
@@ -170,7 +170,7 @@ class MainActivity : Activity(), AssistantEngine.Ui {
                 }
                 onReply(
                     if (Settings.canDrawOverlays(this))
-                        "Pronto! Quando a caixa conectar, a A começa a ouvir sozinha."
+                        "Pronto! Quando a caixa conectar, a Alexa começa a ouvir sozinha."
                     else
                         "Pronto! Para ligar sem precisar tocar na notificação, permita \"exibir sobre outros apps\" abaixo.",
                     false
@@ -288,12 +288,12 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         pulse = null
         when (state) {
             AssistantEngine.State.IDLE -> {
-                statusText.text = if (continuous) "Aguardando \"A…\"" else getString(R.string.status_idle)
+                statusText.text = if (continuous) "Aguardando \"Alexa…\"" else getString(R.string.status_idle)
                 micButton.setImageResource(R.drawable.ic_mic)
                 micRing.animate().alpha(0f).scaleX(1f).scaleY(1f).setDuration(200).start()
             }
             AssistantEngine.State.LISTENING -> {
-                statusText.text = if (continuous && !manual) "Ouvindo… (diga \"A, …\")"
+                statusText.text = if (continuous && !manual) "Ouvindo… (diga \"Alexa, …\")"
                 else getString(R.string.status_listening)
                 micButton.setImageResource(R.drawable.ic_stop)
                 micRing.animate().cancel()

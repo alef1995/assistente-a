@@ -9,19 +9,49 @@ import java.util.Locale
  * Funciona por palavras-chave, sem IA: é rápido, previsível e funciona offline.
  *
  * Para errar menos, antes de procurar as palavras-chave a frase passa por três correções:
- *  1. "A" grudado no comando ("atocar", "apausar", "aproxima") é separado;
+ *  1. o nome "Alexa" é reconhecido mesmo quando vem escrito errado ("Alexia", "Alessa", "a lexa");
  *  2. erros comuns do reconhecedor viram a palavra certa ("posar" → "pausar");
  *  3. palavras de comando com uma letra trocada são aproximadas ("pausr" → "pausar").
  * O nome da música, depois de "tocar", é sempre usado exatamente como foi ouvido.
  */
 object CommandParser {
 
-    // Formas como o reconhecedor costuma transcrever a palavra de ativação "A".
-    private val WAKE_PREFIXES = listOf(
-        listOf("ei", "a"), listOf("hey", "a"), listOf("hei", "a"), listOf("oi", "a"), listOf("ok", "a"),
-        listOf("e", "a"), listOf("ai", "a"), listOf("assistente"), listOf("eia"), listOf("heia"),
-        listOf("a"), listOf("ah"), listOf("ha"), listOf("aa"), listOf("aah"), listOf("ahh")
-    )
+    // Palavra de ativação "Alexa" e como os reconhecedores costumam escrevê-la:
+    // alexa, alexia, aleixa, alessa, alesa, alecsa, aleksa, olexa, lexa, alex, "a lexa", "alex a"...
+    private val WAKE_TOKEN = Regex("^((a|o|ha)l[ei]|ele)i?(x|ks|cs|ss|s|ch|k|z)[iy]?a$|^lexa$|^alex$|^aleks$|^alexas$")
+    private val WAKE_JOINED = Regex("^(a|o)l[ei]i?(x|ks|cs|ch|k)[iy]?a$")
+    private val WAKE_FILLERS = setOf("ei", "oi", "ok", "hey", "hei", "e", "o", "ow", "ah")
+
+    /** Quantos tokens a partir de [i] formam o nome "Alexa" (0 = não é o nome). */
+    private fun wakeLength(tokens: List<String>, i: Int): Int {
+        val t = tokens.getOrNull(i) ?: return 0
+        // Nome partido em dois ("a lexa", "alex a"): só com o som de "x", para não confundir com "a lisa"
+        if (i + 1 < tokens.size && WAKE_JOINED.matches(t + tokens[i + 1])) return 2
+        if (WAKE_TOKEN.matches(t)) return 1
+        return 0
+    }
+
+    /** Fim do nome no começo da frase ("Alexa, ...", "Ei Alexa ..."), ou -1. */
+    private fun wakeEnd(tokens: List<String>): Int {
+        wakeLength(tokens, 0).let { if (it > 0) return it }
+        if (tokens.firstOrNull() in WAKE_FILLERS) wakeLength(tokens, 1).let { if (it > 0) return 1 + it }
+        return -1
+    }
+
+    /**
+     * Procura o nome "Alexa" em qualquer ponto do texto (usado pelo reconhecedor offline,
+     * que pode ouvir pedaços da música antes do nome). Retorna o que veio depois do nome
+     * (vazio se foi só "Alexa"), ou null se o nome não apareceu.
+     */
+    fun findWake(raw: String): String? {
+        val original = Regex("[\\p{L}\\p{N}%]+").findAll(raw).map { it.value }.toList()
+        val norm = original.map { normalize(it) }
+        for (i in norm.indices) {
+            val len = wakeLength(norm, i)
+            if (len > 0) return original.drop(i + len).joinToString(" ")
+        }
+        return null
+    }
 
     // Verbos que iniciam um pedido de música.
     private val PLAY_PREFIXES = listOf(
@@ -92,21 +122,13 @@ object CommandParser {
         // "50%" vira "50" e "%"; "por cento" vira "%"; "7h30" vira "7" "30"
         splitPercent(original, norm)
         splitHours(original, norm)
-        // "atocar" → "a tocar" (só no começo da frase ou depois de "ei"/"oi")
-        splitGluedWake(original, norm)
 
         // Correção dos erros conhecidos e de pequenas trocas de letras (só para achar o comando)
         val fixed = norm.map { fix(it) }.toMutableList()
 
-        var start = 0
-        var hadWake = false
-        for (prefix in WAKE_PREFIXES) {
-            if (startsWith(fixed, 0, prefix)) {
-                start = prefix.size
-                hadWake = true
-                break
-            }
-        }
+        val end = wakeEnd(norm)
+        val hadWake = end > 0
+        val start = if (hadWake) end else 0
         if (hadWake && start >= fixed.size) return ParseResult(Command.WakeOnly, true)
 
         val tokens = fixed.subList(start, fixed.size)
@@ -501,23 +523,6 @@ object CommandParser {
             prev = cur
         }
         return prev[b.length]
-    }
-
-    private fun splitGluedWake(original: MutableList<String>, norm: MutableList<String>) {
-        var i = 0
-        // depois de "ei"/"hey"/"oi"/"ok", o "a" grudado vem na palavra seguinte
-        if (norm.size > 1 && norm[0] in setOf("ei", "hey", "hei", "oi", "ok")) i = 1
-        val w = norm.getOrNull(i) ?: return
-        if (w.length < 4 || w in VOCAB || ALIASES.containsKey(w)) return
-        val prefixLen = when {
-            w.startsWith("ha") && fix(w.drop(2)) in VOCAB -> 2
-            w.startsWith("a") && fix(w.drop(1)) in VOCAB -> 1
-            else -> return
-        }
-        norm[i] = w.drop(prefixLen)
-        original[i] = original[i].drop(prefixLen)
-        norm.add(i, "a")
-        original.add(i, "A")
     }
 
     fun normalize(s: String): String {

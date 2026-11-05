@@ -76,7 +76,7 @@ class MediaControl(private val context: Context) {
 
     /**
      * Tenta pedir a música diretamente à sessão do player já aberto, sem trazer o app
-     * para a frente (funciona mesmo com a A em segundo plano). Só é usado se o player
+     * para a frente (funciona mesmo com a Alexa em segundo plano). Só é usado se o player
      * declarar suporte a "tocar a partir de busca". Retorna o nome do app, ou null.
      */
     fun playFromSearch(query: String, extras: android.os.Bundle, onlyPackage: String?): String? {

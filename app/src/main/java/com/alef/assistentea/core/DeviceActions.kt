@@ -56,7 +56,7 @@ class DeviceActions(private val context: Context) {
     fun setTimer(seconds: Int): Boolean = start(
         Intent(AlarmClock.ACTION_SET_TIMER)
             .putExtra(AlarmClock.EXTRA_LENGTH, seconds)
-            .putExtra(AlarmClock.EXTRA_MESSAGE, "A")
+            .putExtra(AlarmClock.EXTRA_MESSAGE, "Alexa")
             .putExtra(AlarmClock.EXTRA_SKIP_UI, true)
     )
 
@@ -64,7 +64,7 @@ class DeviceActions(private val context: Context) {
         Intent(AlarmClock.ACTION_SET_ALARM)
             .putExtra(AlarmClock.EXTRA_HOUR, hour)
             .putExtra(AlarmClock.EXTRA_MINUTES, minute)
-            .putExtra(AlarmClock.EXTRA_MESSAGE, "A")
+            .putExtra(AlarmClock.EXTRA_MESSAGE, "Alexa")
             .putExtra(AlarmClock.EXTRA_SKIP_UI, true)
     )
 

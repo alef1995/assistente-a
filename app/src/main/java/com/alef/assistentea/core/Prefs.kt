@@ -17,7 +17,7 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("speaker_mic", false)
         set(v) = sp.edit().putBoolean("speaker_mic", v).apply()
 
-    /** Tocar um bipe quando a A for chamada (como a Alexa). */
+    /** Tocar um bipe quando a Alexa for chamada (como a Alexa). */
     var wakeBeep: Boolean
         get() = sp.getBoolean("wake_beep", true)
         set(v) = sp.edit().putBoolean("wake_beep", v).apply()

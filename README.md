@@ -35,7 +35,8 @@ Assistente pessoal em português do Brasil que controla músicas e volume por vo
 
 **Como chamar a A**
 
-- **Escuta contínua:** diga "A, …" a qualquer momento — **funciona com a tela apagada** (fica uma notificação fixa "A está ouvindo"). Dizer só "A" dá um bipe e ela espera o pedido.
+- **Escuta contínua:** diga **"Alexa"** a qualquer momento — **funciona com a tela apagada**. Ela responde "Oi!" / "Oi, boa noite!", você faz o pedido e ela repete antes de executar ("Tocando Alcione"). Sem dizer "Alexa", a música segue normalmente.
+- Enquanto espera o nome, ela usa um reconhecedor **offline** (Vosk) que não mexe na música; o Google só é usado para entender o pedido depois do "Oi".
 - **Ligar sozinha com a caixa Bluetooth:** conectou a caixa, a A começa a ouvir; desconectou, ela para (poupa bateria).
 - **Microfone da caixa (experimental):** para caixas com microfone. Enquanto a A ouve por ela, o som fica com qualidade de ligação (limitação do Bluetooth).
 - **Widget** na tela inicial (microfone + "ouvir sempre"), **atalhos** segurando o ícone, e **botão de assistente** (segurar o botão de início, se a A for escolhida como app assistente).

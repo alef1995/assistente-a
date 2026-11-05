@@ -62,7 +62,7 @@ class Speaker(context: Context, private val listener: Listener) : TextToSpeech.O
             listener.onTtsProblem("Voz em português não instalada. Vá em Configurações › Saída de texto para fala e baixe Português (Brasil).")
         }
         tts.setAudioAttributes(attributes)
-        tts.setSpeechRate(1.05f)
+        tts.setSpeechRate(1.12f)
         tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {
                 main.post { isSpeaking = true; listener.onSpeakStart() }
