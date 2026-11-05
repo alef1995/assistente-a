@@ -41,6 +41,19 @@ jobs:
             cp -a assistente-a/. .
           fi
 
+      # Modelo de voz offline em português (Vosk, ~30 MB) usado para esperar o "A".
+      # Não fica guardado no repositório: é baixado a cada compilação.
+      - name: Baixar modelo de voz offline
+        run: |
+          if [ ! -f app/src/main/assets/model-pt/uuid ]; then
+            curl -fsSL --retry 3 -o /tmp/modelo.zip https://alphacephei.com/vosk/models/vosk-model-small-pt-0.3.zip
+            unzip -q /tmp/modelo.zip -d /tmp/modelo
+            mkdir -p app/src/main/assets
+            rm -rf app/src/main/assets/model-pt
+            mv /tmp/modelo/vosk-model-small-pt-0.3 app/src/main/assets/model-pt
+            echo "vosk-model-small-pt-0.3" > app/src/main/assets/model-pt/uuid
+          fi
+
       - name: Instalar Java 17
         uses: actions/setup-java@v4
         with:
