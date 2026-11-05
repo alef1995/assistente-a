@@ -1,8 +1,6 @@
 package com.alef.assistentea.core
 
 import android.content.Context
-import android.media.AudioManager
-import android.media.ToneGenerator
 import android.os.Handler
 import android.os.Looper
 import android.speech.SpeechRecognizer
@@ -15,6 +13,7 @@ import com.alef.assistentea.music.MusicLauncher
 import com.alef.assistentea.voice.BluetoothMic
 import com.alef.assistentea.voice.Speaker
 import com.alef.assistentea.voice.SpeechListener
+import com.alef.assistentea.voice.WakeWordDetector
 
 /**
  * O "cérebro" da A: ouve, entende, executa e responde.
@@ -64,6 +63,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
     private val music = MusicLauncher(context)
     private val device = DeviceActions(context)
     private val btMic = BluetoothMic(context)
+    private val wake = WakeWordDetector(context) { onWakeText(it) }
 
     var state = State.IDLE
         private set
@@ -79,11 +79,24 @@ class AssistantEngine(private val context: Context, private val host: Host) :
     private var errorsInARow = 0
     private var lastReply = ""
     private var lastReplyError = false
+    /** O próximo pedido vem logo depois do "Oi": uma frase solta ("Alcione") vira "tocar Alcione". */
+    private var afterGreeting = false
 
+    /** Volta a esperar o "A". */
     private val relisten = Runnable {
         if (continuous && state == State.IDLE && !speech.isListening && !speaker.isSpeaking) {
-            startListening(manual = false)
+            if (wake.isReady && !wake.failed) {
+                if (!wake.start()) startListening(manual = false)
+                else ui?.onState(state, continuous, manualTrigger)
+            } else {
+                startListening(manual = false) // sem o modelo offline: espera o "A" com o Google
+            }
         }
+    }
+
+    init {
+        // Carrega o reconhecedor offline do "A" em segundo plano
+        wake.load { ok -> if (ok && continuous && state == State.IDLE && !speech.isListening) main.post(relisten) }
     }
 
     private val idleCheck: Runnable = object : Runnable {
@@ -102,6 +115,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
 
     /** Toque no microfone (tela, widget, atalho, botão da notificação). */
     fun tap() {
+        wake.stop()
         when (state) {
             State.LISTENING -> {
                 speech.cancel()
@@ -131,6 +145,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
             if (state == State.IDLE) main.postDelayed(relisten, 300)
         } else {
             main.removeCallbacks(relisten)
+            wake.stop()
             if (speech.isListening) {
                 speech.cancel()
                 restoreDuck()
@@ -145,6 +160,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
 
     fun destroy() {
         main.removeCallbacksAndMessages(null)
+        wake.destroy()
         speech.destroy()
         speaker.shutdown()
         restoreDuck()
@@ -159,6 +175,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
             return
         }
         if (speech.isListening) return
+        wake.stop()
         if (speaker.isSpeaking) speaker.stop()
         main.removeCallbacks(idleCheck)
         main.removeCallbacks(relisten)
@@ -193,14 +210,42 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         if (continuous) main.postDelayed(relisten, delay) else scheduleIdleCheck()
     }
 
-    private fun beep() {
-        if (!prefs.wakeBeep) return
-        try {
-            val tg = ToneGenerator(AudioManager.STREAM_MUSIC, 70)
-            tg.startTone(ToneGenerator.TONE_PROP_BEEP, 150)
-            main.postDelayed({ tg.release() }, 400)
-        } catch (_: Exception) {
+    // ================================================================== "A" e "Oi"
+
+    /** Texto ouvido pelo reconhecedor offline enquanto espera o "A". */
+    private fun onWakeText(text: String) {
+        if (text.isEmpty() && wake.failed) {
+            // O reconhecedor offline falhou: continua esperando o "A" com o Google
+            main.postDelayed(relisten, 500)
+            return
         }
+        if (!continuous || state != State.IDLE || speech.isListening || speaker.isSpeaking) return
+        val r = CommandParser.parse(text)
+        if (!r.hadWakeWord) return // conversa ou música: ignora e continua tocando normalmente
+        when (val cmd = r.command) {
+            Command.WakeOnly, is Command.Play -> { wake.stop(); greetAndListen() }
+            is Command.Unknown -> return // "a vida é bela" na letra da música: não é com a A
+            else -> {
+                wake.stop()
+                setState(State.PROCESSING)
+                execute(cmd)
+            }
+        }
+    }
+
+    /** "Oi, boa noite!" e escuta o pedido (a música abaixa só agora). */
+    private fun greetAndListen() {
+        setState(State.PROCESSING)
+        reply(greetingShort()) {
+            afterGreeting = true
+            startListening(manual = true)
+        }
+    }
+
+    private fun greetingShort(): String {
+        val h = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+        val period = when (h) { in 5..11 -> "Oi, bom dia!"; in 12..17 -> "Oi, boa tarde!"; else -> "Oi, boa noite!" }
+        return listOf(period, "Oi!").random()
     }
 
     // ================================================================== SpeechListener.Callback
@@ -211,12 +256,6 @@ class AssistantEngine(private val context: Context, private val host: Host) :
 
     override fun onPartialText(text: String) {
         ui?.onHeard("“$text”")
-        // Na escuta contínua, ao ouvir "A, ..." já abaixa a música para entender melhor o resto da frase
-        if (continuous && !manualTrigger && duckedIndex == null && media.isMusicPlaying() &&
-            CommandParser.parse(text).hadWakeWord
-        ) {
-            duckedIndex = volume.duck(15)
-        }
     }
 
     override fun onVoiceLevel(rmsDb: Float) {
@@ -229,8 +268,15 @@ class AssistantEngine(private val context: Context, private val host: Host) :
     override fun onFinalResults(alternatives: List<String>) {
         errorsInARow = 0
         val waitingWake = continuous && !manualTrigger
-        val best = CommandParser.parseBest(alternatives, preferWake = waitingWake)
+        val greeted = afterGreeting
+        afterGreeting = false
+        var best = CommandParser.parseBest(alternatives, preferWake = waitingWake)
         ui?.onHeard("“${alternatives.first()}”")
+        // Depois do "Oi", um nome solto ("Alcione", "Raça Negra") é pedido de música
+        if (greeted && best.command is Command.Unknown) {
+            val name = alternatives.first().trim().trimEnd('.', '!', '?')
+            if (name.isNotEmpty()) best = best.copy(command = Command.Play(name))
+        }
 
         // Na escuta contínua, só reage se a frase começar com "A" e for um comando
         if (waitingWake && (!best.hadWakeWord || best.command is Command.Unknown)) {
@@ -239,21 +285,18 @@ class AssistantEngine(private val context: Context, private val host: Host) :
             main.postDelayed(relisten, 250)
             return
         }
+        restoreDuck()
         if (best.command == Command.WakeOnly) {
-            // "A" sozinho: bipe e escuta o pedido (como a Alexa)
-            restoreDuck()
-            setState(State.IDLE)
-            beep()
-            main.postDelayed({ startListening(manual = true) }, 250)
+            // "A" sozinho: "Oi!" e escuta o pedido (como a Alexa)
+            greetAndListen()
             return
         }
-        restoreDuck()
         setState(State.PROCESSING)
-        if (waitingWake) beep()
         execute(best.command)
     }
 
     override fun onListenError(message: String, silent: Boolean, code: Int) {
+        afterGreeting = false
         restoreDuck()
         setState(State.IDLE)
         if (code == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) {
@@ -262,8 +305,10 @@ class AssistantEngine(private val context: Context, private val host: Host) :
             host.onMicBlocked()
             return
         }
-        if (continuous && !manualTrigger && silent) {
-            main.postDelayed(relisten, 250)
+        if (continuous && silent) {
+            // Ninguém falou (inclusive depois do "Oi"): volta a esperar o "A", sem falar nada
+            if (manualTrigger) showReply("Não ouvi nada. Diga \"A\" quando quiser.")
+            main.postDelayed(relisten, 300)
             return
         }
         if (silent) showReply(message) else showReply(message, error = true)
@@ -369,7 +414,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
 
             Command.Cancel -> { setState(State.IDLE); showReply("Ok."); afterTurn() }
 
-            Command.WakeOnly -> reply("Oi! Pode falar.") { startListening(manual = true) }
+            Command.WakeOnly -> greetAndListen()
 
             is Command.Unknown -> reply("Não entendi. Diga \"ajuda\" para ouvir os comandos.")
         }
@@ -384,7 +429,8 @@ class AssistantEngine(private val context: Context, private val host: Host) :
     }
 
     private fun playMusic(cmd: Command.Play) {
-        val what = cmd.artist?.let { "músicas de $it" } ?: cmd.query
+        // Repete o pedido antes de tocar: "Tocando Alcione."
+        val what = cmd.artist ?: cmd.query
         val before = media.nowPlaying()
         reply("Tocando $what.") {
             when (val result = music.play(cmd.query, cmd.artist, media)) {

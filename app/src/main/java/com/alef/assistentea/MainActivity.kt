@@ -64,7 +64,6 @@ class MainActivity : Activity(), AssistantEngine.Ui {
     private lateinit var continuousSwitch: Switch
     private lateinit var bluetoothSwitch: Switch
     private lateinit var speakerMicSwitch: Switch
-    private lateinit var beepSwitch: Switch
 
     private val main = Handler(Looper.getMainLooper())
     private var engine: AssistantEngine? = null
@@ -107,7 +106,6 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         continuousSwitch = findViewById(R.id.continuousSwitch)
         bluetoothSwitch = findViewById(R.id.bluetoothSwitch)
         speakerMicSwitch = findViewById(R.id.speakerMicSwitch)
-        beepSwitch = findViewById(R.id.beepSwitch)
 
         volume = VolumeController(this)
         media = MediaControl(this)
@@ -189,9 +187,6 @@ class MainActivity : Activity(), AssistantEngine.Ui {
                 requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), REQ_BT)
             }
         }
-
-        beepSwitch.isChecked = prefs.wakeBeep
-        beepSwitch.setOnCheckedChangeListener { _, checked -> prefs.wakeBeep = checked }
 
         if (Build.VERSION.SDK_INT >= 33 &&
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED

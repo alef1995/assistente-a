@@ -10,3 +10,5 @@ captures/
 .cxx/
 *.apk
 !keystore/
+# Modelo de voz offline: baixado automaticamente na compilação (GitHub Actions)
+app/src/main/assets/model-pt/

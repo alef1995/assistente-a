@@ -247,15 +247,6 @@
             android:textColor="@color/text_dim"
             android:textSize="12sp" />
 
-        <Switch
-            android:id="@+id/beepSwitch"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:text="@string/wake_beep"
-            android:textColor="@color/text"
-            android:textSize="15sp" />
-
         <TextView
             android:id="@+id/overlayButton"
             android:layout_width="match_parent"
