@@ -3,7 +3,9 @@ package com.alef.assistentea.voice
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import org.vosk.Model
 import org.vosk.Recognizer
 import org.vosk.android.RecognitionListener
@@ -35,6 +37,49 @@ class WakeWordDetector(private val context: Context, private val onText: (String
         private set
 
     val isReady: Boolean get() = model != null
+
+    /** Formas do nome que o reconhecedor conhece (para mostrar na tela, se precisar). */
+    var wakeForms: List<String> = emptyList()
+        private set
+
+    companion object {
+        /**
+         * Como "Alexa" pode aparecer para um reconhecedor em português.
+         * Só as que existirem no vocabulário do modelo são usadas.
+         */
+        private val CANDIDATES = listOf(
+            "alexa", "alexia", "aléxia", "alécia", "aleixa", "alessa", "alesa", "alex",
+            "lexa", "lessa", "aleksa",
+            "alex a", "a lexa", "a lessa", "a lesa", "a leça", "a leque", "a lécia", "a lécio",
+            "ei alexa", "ok alexa"
+        )
+    }
+
+    /**
+     * Lista de frases para o modo "só estas palavras": o reconhecedor passa a ouvir apenas
+     * o nome e marca todo o resto (conversa, música) como desconhecido.
+     */
+    private fun grammar(): String? {
+        val vocab = readVocabulary()
+        val forms = CANDIDATES.filter { phrase ->
+            vocab == null || phrase.split(" ").all { it in vocab }
+        }
+        wakeForms = forms
+        if (forms.isEmpty()) return null
+        return JSONArray(forms + "[unk]").toString()
+    }
+
+    /** Palavras que o modelo conhece (arquivo words.txt do modelo), ou null se não achar. */
+    private fun readVocabulary(): Set<String>? {
+        val dir = File(context.getExternalFilesDir(null), "model")
+        val file = listOf("graph/words.txt", "words.txt").map { File(dir, it) }.firstOrNull { it.exists() }
+            ?: return null
+        return try {
+            file.useLines { lines -> lines.map { it.substringBefore(' ') }.toHashSet() }
+        } catch (_: Exception) {
+            null
+        }
+    }
     val isRunning: Boolean get() = service != null
 
     /** Prepara o modelo (leva alguns segundos na primeira vez). */
@@ -66,7 +111,9 @@ class WakeWordDetector(private val context: Context, private val onText: (String
         if (service != null) return true
         val m = model ?: return false
         return try {
-            val rec = Recognizer(m, 16000.0f)
+            val g = grammar()
+            val rec = if (g != null) Recognizer(m, 16000.0f, g) else Recognizer(m, 16000.0f)
+            grammarMode = g != null
             val s = SpeechService(rec, 16000.0f)
             lastPartial = ""
             s.startListening(listener)
@@ -114,14 +161,21 @@ class WakeWordDetector(private val context: Context, private val onText: (String
     }
 
     private var lastPartial = ""
+    private var grammarMode = false
 
     private fun deliver(json: String?, key: String, final: Boolean) {
-        val text = try {
+        var text = try {
             JSONObject(json ?: return).optString(key)
         } catch (_: Exception) {
             return
         }
         if (text.isBlank()) return
+        // Modo "só o nome": qualquer coisa que não seja [unk] é o nome sendo chamado
+        if (grammarMode) {
+            val words = text.split(" ").filter { it.isNotBlank() && it != "[unk]" }
+            if (words.isEmpty()) return
+            text = "alexa"
+        }
         if (!final) {
             if (text == lastPartial) return // o Vosk repete o mesmo parcial várias vezes
             lastPartial = text

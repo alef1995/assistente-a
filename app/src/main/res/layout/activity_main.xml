@@ -360,6 +360,23 @@
                 android:textColor="@color/text_dim"
                 android:textSize="13sp" />
 
+            <Switch
+                android:id="@+id/youtubeAppSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:text="@string/youtube_in_app"
+                android:textColor="@color/text"
+                android:textSize="16sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/youtube_in_app_hint"
+                android:textColor="@color/text_dim"
+                android:textSize="13sp" />
+
             <TextView
                 android:id="@+id/playerChip"
                 android:layout_width="match_parent"

@@ -17,6 +17,11 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("tablet_mode", true)
         set(v) = sp.edit().putBoolean("tablet_mode", v).apply()
 
+    /** YouTube: tocar no app Morphe (sem propaganda, mas o app aparece) em vez de na tela da Alexa. */
+    var youtubeInApp: Boolean
+        get() = sp.getBoolean("youtube_in_app", false)
+        set(v) = sp.edit().putBoolean("youtube_in_app", v).apply()
+
     /** Tocar um bipe quando a Alexa for chamada (como a Alexa). */
     var wakeBeep: Boolean
         get() = sp.getBoolean("wake_beep", true)

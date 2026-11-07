@@ -224,6 +224,11 @@ class MainActivity : Activity(), AssistantEngine.Ui {
             }
         }
 
+        findViewById<Switch>(R.id.youtubeAppSwitch).apply {
+            isChecked = prefs.youtubeInApp
+            setOnCheckedChangeListener { _, checked -> prefs.youtubeInApp = checked }
+        }
+
         bluetoothSwitch.isChecked = prefs.autoBluetooth
         bluetoothSwitch.setOnCheckedChangeListener { _, checked ->
             prefs.autoBluetooth = checked

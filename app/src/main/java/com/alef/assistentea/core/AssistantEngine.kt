@@ -233,6 +233,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         if (!continuous || state != State.IDLE || speech.isListening || speaker.isSpeaking) return
         // Conversa ou música sem o nome: ignora e a música continua normalmente
         val rest = CommandParser.findWake(text) ?: return
+        ui?.onHeard("“Alexa”")
         if (rest.isBlank()) {
             // Só "Alexa": responde rápido, sem esperar a pessoa ficar em silêncio
             main.removeCallbacks(wakeTrigger)
@@ -464,7 +465,8 @@ class AssistantEngine(private val context: Context, private val host: Host) :
                 is MusicLauncher.Result.Started -> {
                     showReply("▶ $what · ${result.playerLabel}")
                     if (result.viaSession) verifySessionPlayback(cmd, before)
-                    if (result.videoApp) returnToAlexaWhenPlaying(before)
+                    // Abriu a tela do player (YouTube, ou Spotify fechado): volta para a Alexa quando tocar
+                    if (!result.viaSession) returnToAlexaWhenPlaying(before)
                 }
                 is MusicLauncher.Result.OpenedSearch ->
                     showReply("Abri a busca no ${result.playerLabel}. Toque na música para começar.")
@@ -478,7 +480,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
     private fun playOnYouTube(cmd: Command.Play, what: String, before: TrackInfo?) {
         showReply("Procurando $what no YouTube…")
         val player = embedded
-        if (player != null && player.isReady) {
+        if (player != null && player.isReady && !prefs.youtubeInApp) {
             // Toca dentro da tela da Alexa, sem abrir o app do YouTube
             val yt = music.youTube()
             val term = music.youTubeTerm(cmd.query, cmd.artist)
