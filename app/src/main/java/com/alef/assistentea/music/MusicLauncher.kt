@@ -43,6 +43,8 @@ class MusicLauncher(private val context: Context) {
             MORPHE_YOUTUBE,
             Player("com.spotify.music", "Spotify"),
             Player("com.google.android.apps.youtube.music", "YouTube Music"),
+            Player("app.morphe.android.apps.youtube.music", "YouTube Music (Morphe)"),
+            Player("app.revanced.android.apps.youtube.music", "YouTube Music (ReVanced)"),
             Player("deezer.android.app", "Deezer"),
             Player("com.amazon.mp3", "Amazon Music")
         )

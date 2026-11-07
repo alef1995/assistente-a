@@ -9,6 +9,7 @@ import com.alef.assistentea.command.CommandParser
 import com.alef.assistentea.media.MediaControl
 import com.alef.assistentea.media.TrackInfo
 import com.alef.assistentea.media.VolumeController
+import com.alef.assistentea.music.BackgroundPlayer
 import com.alef.assistentea.music.MusicLauncher
 import com.alef.assistentea.music.YouTubePlayer
 import com.alef.assistentea.voice.PhoneMic
@@ -461,12 +462,39 @@ class AssistantEngine(private val context: Context, private val host: Host) :
                 playOnYouTube(cmd, what, before)
                 return@reply
             }
+            // 1º: manda o player (ex.: Spotify) tocar em segundo plano, sem abrir a tela dele
+            val player = music.preferredPlayer ?: music.installedPlayers().firstOrNull()
+            if (player != null) {
+                showReply("Pedindo ao ${player.label}…")
+                BackgroundPlayer(context).play(player.packageName, cmd.query, cmd.artist) { ok ->
+                    if (ok) {
+                        showReply("▶ $what · ${player.label}")
+                        ui?.onRefresh()
+                    } else {
+                        launchPlayer(cmd, what, before) // 2º: abre o app do jeito tradicional
+                    }
+                }
+            } else {
+                launchPlayer(cmd, what, before)
+            }
+        }
+    }
+
+    /** Abre o app de música com o pedido; insiste no play e volta para a tela da Alexa quando tocar. */
+    private fun launchPlayer(cmd: Command.Play, what: String, before: TrackInfo?) {
+        run {
             when (val result = music.play(cmd.query, cmd.artist, media)) {
                 is MusicLauncher.Result.Started -> {
                     showReply("▶ $what · ${result.playerLabel}")
                     if (result.viaSession) verifySessionPlayback(cmd, before)
-                    // Abriu a tela do player (YouTube, ou Spotify fechado): volta para a Alexa quando tocar
-                    if (!result.viaSession) returnToAlexaWhenPlaying(before)
+                    // Abriu a tela do player: se não começar sozinho, insiste no play; volta para a Alexa quando tocar
+                    if (!result.viaSession) returnToAlexaWhenPlaying(before) {
+                        val extras = android.os.Bundle().apply {
+                            putString(android.app.SearchManager.QUERY, cmd.query)
+                            putString(android.provider.MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/*")
+                        }
+                        if (media.playFromSearch(cmd.query, extras, null) == null) media.play()
+                    }
                 }
                 is MusicLauncher.Result.OpenedSearch ->
                     showReply("Abri a busca no ${result.playerLabel}. Toque na música para começar.")
@@ -520,7 +548,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
      * a tela da Alexa (ondas) volta para a frente e o YouTube (Morphe) continua tocando em segundo plano.
      * Se ainda não estiver tocando (ex.: abriu só a lista de resultados), deixa o YouTube na tela.
      */
-    private fun returnToAlexaWhenPlaying(before: TrackInfo?, attempt: Int = 0) {
+    private fun returnToAlexaWhenPlaying(before: TrackInfo?, attempt: Int = 0, retry: (() -> Unit)? = null) {
         if (!prefs.tabletMode) return
         main.postDelayed({
             val now = media.nowPlaying()
@@ -534,8 +562,12 @@ class AssistantEngine(private val context: Context, private val host: Host) :
                     )
                 } catch (_: Exception) {
                 }
-                attempt < 12 -> returnToAlexaWhenPlaying(before, attempt + 1)
-                else -> showReply("Se a música não começou, toque nela no YouTube.")
+                attempt < 12 -> {
+                    // O app abriu mas não deu play: pede de novo (já com ele aberto, costuma funcionar)
+                    if (attempt == 3 || attempt == 7) retry?.invoke()
+                    returnToAlexaWhenPlaying(before, attempt + 1, retry)
+                }
+                else -> showReply("Se a música não começou, toque nela no app de música.")
             }
         }, if (attempt == 0) 2000L else 1000L)
     }
