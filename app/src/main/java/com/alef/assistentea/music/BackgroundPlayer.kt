@@ -63,7 +63,11 @@ class BackgroundPlayer(private val context: Context) {
                     } catch (_: Exception) {
                         return finish(false)
                     }
+                    // Música que estava tocando antes (para saber se a nova começou de verdade)
+                    val oldTitle = controller.metadata?.getString(android.media.MediaMetadata.METADATA_KEY_TITLE)
+                    val wasPlaying = controller.playbackState?.state == PlaybackState.STATE_PLAYING
                     try {
+                        if (wasPlaying) controller.transportControls.pause()
                         controller.transportControls.playFromSearch(query, extras)
                     } catch (_: Exception) {
                         return finish(false)
@@ -72,7 +76,10 @@ class BackgroundPlayer(private val context: Context) {
                     val check = object : Runnable {
                         override fun run() {
                             if (finished) return
-                            if (controller.playbackState?.state == PlaybackState.STATE_PLAYING) return finish(true)
+                            val playing = controller.playbackState?.state == PlaybackState.STATE_PLAYING
+                            val title = controller.metadata?.getString(android.media.MediaMetadata.METADATA_KEY_TITLE)
+                            // Só conta como sucesso se a música mudou (ou se nada tocava antes)
+                            if (playing && (!wasPlaying || title != oldTitle || oldTitle == null)) return finish(true)
                             checks++
                             // Às vezes o app precisa de um segundo pedido logo depois de "acordar"
                             if (checks == 6) try { controller.transportControls.playFromSearch(query, extras) } catch (_: Exception) {}

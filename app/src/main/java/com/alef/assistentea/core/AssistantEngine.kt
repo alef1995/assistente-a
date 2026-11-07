@@ -365,8 +365,8 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         when (cmd) {
             is Command.Play -> playMusic(cmd)
 
-            Command.Pause -> { if (usingEmbedded) embedded?.pause() else media.pause(); reply("Pausado.") }
-            Command.Stop -> { if (usingEmbedded) embedded?.stop() else media.stop(); reply("Música parada.") }
+            Command.Pause -> { pauseEverything(); reply("Pausado.") }
+            Command.Stop -> { pauseEverything(stop = true); reply("Música parada.") }
             Command.Resume -> reply("Continuando.") { if (usingEmbedded) embedded?.resume() else media.play() }
             Command.Next -> reply("Próxima.") { if (usingEmbedded) embedded?.next() else media.next() }
             Command.Previous -> reply("Música anterior.") { if (usingEmbedded) embedded?.previous() else media.previous() }
@@ -450,6 +450,12 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         main.postDelayed({ ui?.onRefresh() }, 700)
     }
 
+    /** Pausa o que estiver tocando: o player da tela da Zuri e o app de música (Spotify, YouTube…). */
+    private fun pauseEverything(stop: Boolean = false) {
+        embedded?.let { if (stop) { if (it.isActive) it.stop() } else if (it.isPlaying) it.pause() }
+        media.pause()
+    }
+
     private fun greeting(): String {
         val h = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
         val s = when (h) { in 5..11 -> "Bom dia"; in 12..17 -> "Boa tarde"; else -> "Boa noite" }
@@ -465,6 +471,8 @@ class AssistantEngine(private val context: Context, private val host: Host) :
                 playOnYouTube(cmd, what, before)
                 return@reply
             }
+            // Para a música da tela da Zuri, se estiver tocando
+            embedded?.let { if (it.isActive) it.stop() }
             // 1º: manda o player (ex.: Spotify) tocar em segundo plano, sem abrir a tela dele
             val player = music.preferredPlayer ?: music.installedPlayers().firstOrNull()
             if (player != null) {
@@ -521,7 +529,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
                     if (videos.isEmpty()) {
                         reply("Não consegui pesquisar no YouTube. Confira a internet do tablet.", error = true)
                     } else {
-                        if (media.isMusicPlaying()) media.pause() // para outro player que esteja tocando
+                        media.pause() // para o app de música que estiver tocando (Spotify, YouTube…)
                         player.playQueue(videos.map { it.id }, videos.map { it.title })
                         showReply("▶ " + (videos.first().title ?: what))
                     }

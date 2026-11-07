@@ -103,7 +103,12 @@ object CommandParser {
         "lanternaa" to "lanterna", "lanterninha" to "lanterna",
         "taimer" to "timer", "taimar" to "timer", "taime" to "timer", "time" to "timer",
         "despertadô" to "despertador", "alarm" to "alarme",
-        "brigado" to "obrigado", "brigada" to "obrigada"
+        "brigado" to "obrigado", "brigada" to "obrigada",
+        // "stop" falado em português
+        "estop" to "stop", "istop" to "stop", "estopi" to "stop", "istopi" to "stop", "stopi" to "stop",
+        "estope" to "stop", "istope" to "stop", "stope" to "stop", "estóp" to "stop", "tope" to "stop",
+        // "pause"/"pausa"
+        "pose" to "pausa", "pouse" to "pausa", "pausi" to "pausa", "pauze" to "pausa", "pousi" to "pausa"
     )
 
     /** Escolhe a melhor alternativa do reconhecedor: a primeira que vira um comando conhecido,
@@ -264,7 +269,8 @@ object CommandParser {
             return Command.Pause
         }
         if (has(text, "parar", "para a musica", "para de tocar", "para musica", "para o som",
-                "para tudo", "stop", "desliga a musica", "desligar a musica", "chega", "pare") || text == "para") {
+                "para tudo", "stop", "desliga a musica", "desligar a musica", "chega", "pare") || text == "para" ||
+            tokens.firstOrNull() == "stop") {
             return Command.Stop
         }
 

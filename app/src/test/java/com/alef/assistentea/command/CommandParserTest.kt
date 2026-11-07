@@ -80,6 +80,19 @@ class CommandParserTest {
         assertEquals(null, CommandParser.findWake("a lisa"))
     }
 
+    @Test fun pausarEStop() {
+        assertEquals(Command.Pause, cmd("pausar música"))
+        assertEquals(Command.Pause, cmd("pausa a música"))
+        assertEquals(Command.Pause, cmd("Zuri, pausar a música"))
+        assertEquals(Command.Pause, cmd("pose"))
+        assertEquals(Command.Stop, cmd("stop"))
+        assertEquals(Command.Stop, cmd("Stop."))
+        assertEquals(Command.Stop, cmd("estop"))
+        assertEquals(Command.Stop, cmd("istópi"))
+        assertEquals(Command.Stop, cmd("Zuri, stop"))
+        assertEquals(Command.Stop, cmd("para a música"))
+    }
+
     @Test fun volume() {
         assertEquals(Command.VolumeUp, cmd("Zuri, aumentar volume."))
         assertEquals(Command.VolumeDown, cmd("Zuri, diminuir volume."))
