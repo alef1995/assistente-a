@@ -38,4 +38,6 @@
     <string name="ai_key_hint">Cole aqui a chave (gsk_…, sk-or-… ou AIza…)</string>
     <string name="ai_save">Salvar chave e testar</string>
     <string name="city_hint">Sua cidade, para a previsão do tempo (ex.: São Paulo)</string>
+    <string name="morning_music_hint">Música do \"bom dia\" (opcional, ex.: MPB tranquila)</string>
+    <string name="exact_alarm">Permitir lembretes na hora exata</string>
 </resources>

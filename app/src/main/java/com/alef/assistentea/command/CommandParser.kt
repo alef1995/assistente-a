@@ -282,6 +282,9 @@ object CommandParser {
         // 15) Conversa
         if (has(text, "piada", "me faz rir", "algo engracado", "me faca rir")) return Command.Joke
         if (has(text, "obrigado", "obrigada", "valeu", "agradeco", "muito obrigado")) return Command.Thanks
+        if ((tokens.size <= 4 && has(text, "bom dia")) || has(text, "rotina da manha", "rotina do bom dia", "rotina de bom dia")) {
+            return Command.MorningRoutine
+        }
         if (tokens.size <= 4 && has(text, "bom dia", "boa tarde", "boa noite", "oi", "ola", "tudo bem",
                 "e ai", "como voce esta", "como vai", "beleza")) {
             return Command.Greeting

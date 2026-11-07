@@ -38,6 +38,8 @@ sealed class Command {
     data object Joke : Command()
     data object Thanks : Command()
     data object Greeting : Command()
+    /** "Bom dia": hora, clima do dia, lembretes de hoje e música (opcional). */
+    data object MorningRoutine : Command()
     data object Help : Command()
 
     /** "pode parar de ouvir", "tchau": desliga a escuta contínua. */

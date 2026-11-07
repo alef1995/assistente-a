@@ -75,7 +75,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
     private val music = MusicLauncher(context)
     private val device = DeviceActions(context)
     private val phoneMic = PhoneMic(context)
-    private val ai = AiBrain(prefs)
+    private val ai = AiBrain(context, prefs)
     private val wake = WakeWordDetector(context) { text, final -> onWakeText(text, final) }
 
     /** Formas do nome que o reconhecedor offline está ouvindo (para conferir nas configurações). */
@@ -244,7 +244,8 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         if (rest.isBlank()) {
             // Só "Zuri": responde rápido, sem esperar a pessoa ficar em silêncio
             main.removeCallbacks(wakeTrigger)
-            if (final) wakeTrigger.run() else main.postDelayed(wakeTrigger, 350)
+            // Espera um instante: se a pessoa continuar ("Zuri, volume três"), executa direto
+            if (final) wakeTrigger.run() else main.postDelayed(wakeTrigger, 650)
             return
         }
         // "Zuri, pausar" de uma vez: espera a frase terminar
@@ -433,6 +434,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
             Command.Joke -> reply(device.joke())
             Command.Thanks -> reply(listOf("De nada!", "Por nada!", "Imagina!", "Disponha!").random())
             Command.Greeting -> reply(greeting())
+            Command.MorningRoutine -> morningRoutine()
 
             Command.Help -> reply(
                 "Você pode dizer: tocar e o nome da música ou do artista, pausar, continuar, próxima, " +
@@ -499,6 +501,45 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         }
         parts += "volume ${volume.level()} de 10"
         return parts.joinToString("; ")
+    }
+
+    // ================================================================== avisos e rotina
+
+    /** Fala um aviso (ex.: lembrete) mesmo com a tela apagada: acende a tela e repete uma vez. */
+    fun announce(text: String) {
+        host.wakeScreen()
+        if (speech.isListening) speech.cancel()
+        wake.stop()
+        val ducked = if (musicPlaying()) volume.duck(25) else null
+        setState(State.PROCESSING)
+        reply(text) {
+            reply(text) {
+                ducked?.let { volume.restoreIndex(it) }
+            }
+        }
+    }
+
+    /** "Bom dia": hora, clima, lembretes de hoje e, se configurada, a música da manhã. */
+    private fun morningRoutine() {
+        setState(State.PROCESSING)
+        val city = prefs.city
+        val organizer = Organizer(context)
+        Thread {
+            val weather = if (city.isNotBlank()) try { Weather.morningSummary(city) } catch (_: Exception) { null } else null
+            main.post {
+                val today = organizer.todayReminders()
+                val parts = mutableListOf("Bom dia! " + device.timeSentence())
+                weather?.let { parts += it }
+                if (today.isNotEmpty()) {
+                    parts += if (today.size == 1) "Você tem um lembrete hoje: ${today[0].text}, ${organizer.whenText(today[0].at)}."
+                    else "Você tem ${today.size} lembretes hoje: " + today.joinToString("; ") { "${it.text}, ${organizer.whenText(it.at)}" } + "."
+                }
+                val music = prefs.morningMusic
+                reply(parts.joinToString(" ")) {
+                    if (music.isNotBlank()) playMusic(Command.Play(music))
+                }
+            }
+        }.start()
     }
 
     /** Porcentagem → escala de 1 a 10 (nunca diz "volume 0" se ainda tem som). */

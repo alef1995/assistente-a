@@ -371,6 +371,30 @@
                 android:textColorHint="@color/text_dim"
                 android:textSize="15sp" />
 
+            <EditText
+                android:id="@+id/morningMusicInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:hint="@string/morning_music_hint"
+                android:importantForAutofill="no"
+                android:inputType="text"
+                android:singleLine="true"
+                android:textColor="@color/text"
+                android:textColorHint="@color/text_dim"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/exactAlarmButton"
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/chip_bg"
+                android:gravity="center"
+                android:text="@string/exact_alarm"
+                android:textColor="@color/text"
+                android:textSize="14sp" />
+
             <TextView
                 android:id="@+id/aiStatus"
                 android:layout_width="match_parent"

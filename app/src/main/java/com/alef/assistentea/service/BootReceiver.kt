@@ -20,6 +20,8 @@ class BootReceiver : BroadcastReceiver() {
             "android.intent.action.QUICKBOOT_POWERON" -> {}
             else -> return
         }
+        // O Android esquece os alarmes ao reiniciar: agenda os lembretes de novo
+        com.alef.assistentea.core.Organizer(context).rescheduleAll()
         if (!Prefs(context).tabletMode) return
         if (Settings.canDrawOverlays(context)) {
             try {

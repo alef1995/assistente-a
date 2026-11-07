@@ -162,6 +162,18 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         val aiStatus = findViewById<TextView>(R.id.aiStatus)
         val cityInput = findViewById<android.widget.EditText>(R.id.cityInput)
         cityInput.setText(prefs.city)
+        val morningInput = findViewById<android.widget.EditText>(R.id.morningMusicInput)
+        morningInput.setText(prefs.morningMusic)
+        morningInput.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) { prefs.morningMusic = s?.toString() ?: "" }
+        })
+        findViewById<TextView>(R.id.exactAlarmButton).setOnClickListener {
+            if (Build.VERSION.SDK_INT >= 31) {
+                openSettings(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$packageName")))
+            }
+        }
         fun status(text: String, error: Boolean) {
             aiStatus.setTextColor(getColor(if (error) R.color.error else R.color.cyan))
             aiStatus.text = text
@@ -183,7 +195,7 @@ class MainActivity : Activity(), AssistantEngine.Ui {
             }
             val provider = com.alef.assistentea.core.AiBrain.providerFor(prefs.aiKey).name
             status("Chave salva. Testando o $provider…", false)
-            com.alef.assistentea.core.AiBrain(prefs).ask(
+            com.alef.assistentea.core.AiBrain(this, prefs).ask(
                 "Diga oi e se apresente em uma frase curta.", "teste da configuração"
             ) { answer, error ->
                 if (answer?.text != null) status("IA funcionando ($provider)! Ela disse: ${answer.text}", false)
@@ -376,6 +388,8 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         main.removeCallbacks(weatherRefresh)
         main.post(weatherRefresh)
         overlayButton.visibility = if (Settings.canDrawOverlays(this)) View.GONE else View.VISIBLE
+        findViewById<TextView>(R.id.exactAlarmButton).visibility =
+            if (com.alef.assistentea.core.Organizer(this).canBeExact()) View.GONE else View.VISIBLE
         val pm = getSystemService(PowerManager::class.java)
         batteryButton.visibility = if (pm.isIgnoringBatteryOptimizations(packageName)) View.GONE else View.VISIBLE
         // Modo tablet: a Zuri fica sempre ouvindo

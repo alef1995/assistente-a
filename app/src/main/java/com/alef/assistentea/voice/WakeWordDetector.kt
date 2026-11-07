@@ -51,6 +51,24 @@ class WakeWordDetector(private val context: Context, private val onText: (String
             "zuri", "zury", "zúri", "suri", "júri", "juri", "zurique", "zurich",
             "zu ri", "su ri", "ei zuri", "oi zuri"
         )
+
+        /**
+         * Comandos simples que podem vir logo depois do nome, de uma vez só ("Zuri, volume três").
+         * Pedidos livres ("tocar Alcione") continuam com o Google, depois do "Oi".
+         */
+        private val COMMANDS = buildList {
+            addAll(listOf(
+                "pausar", "pausa", "pausa a música", "pausar a música", "parar", "para", "para a música",
+                "parar a música", "stop", "continuar", "continua", "volta a tocar", "próxima", "próxima música",
+                "pula", "pular", "pula essa", "anterior", "música anterior", "aumentar", "aumenta",
+                "aumentar o volume", "aumenta o volume", "diminuir", "diminui", "diminuir o volume",
+                "diminui o volume", "abaixa", "abaixa o volume", "mais alto", "mais baixo", "silenciar",
+                "volume máximo", "volume no máximo", "que horas são", "bom dia", "boa tarde", "boa noite",
+                "tchau", "obrigado", "obrigada", "liga a lanterna", "desliga a lanterna"
+            ))
+            val numbers = listOf("um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove", "dez")
+            numbers.forEach { add("volume $it"); add("volume no $it"); add("coloca o volume no $it") }
+        }
     }
 
     /**
@@ -59,12 +77,14 @@ class WakeWordDetector(private val context: Context, private val onText: (String
      */
     private fun grammar(): String? {
         val vocab = readVocabulary()
-        val forms = CANDIDATES.filter { phrase ->
-            vocab == null || phrase.split(" ").all { it in vocab }
-        }
+        fun known(phrase: String) = vocab == null || phrase.split(" ").all { it in vocab }
+        val forms = CANDIDATES.filter(::known)
         wakeForms = forms
         if (forms.isEmpty()) return null
-        return JSONArray(forms + "[unk]").toString()
+        val commands = COMMANDS.filter(::known)
+        // O nome sozinho, ou o nome seguido de um comando simples
+        val phrases = forms + forms.filter { !it.contains(' ') }.flatMap { f -> commands.map { "$f $it" } }
+        return JSONArray(phrases + "[unk]").toString()
     }
 
     /** Palavras que o modelo conhece (arquivo words.txt do modelo), ou null se não achar. */
@@ -168,11 +188,11 @@ class WakeWordDetector(private val context: Context, private val onText: (String
             return
         }
         if (text.isBlank()) return
-        // Modo "só o nome": qualquer coisa que não seja [unk] é o nome sendo chamado
+        // Modo "só o nome (+ comando)": o que não é [unk] é o nome, às vezes seguido de um comando
         if (grammarMode) {
             val words = text.split(" ").filter { it.isNotBlank() && it != "[unk]" }
             if (words.isEmpty()) return
-            text = "zuri"
+            text = words.joinToString(" ")
         }
         if (!final) {
             if (text == lastPartial) return // o Vosk repete o mesmo parcial várias vezes

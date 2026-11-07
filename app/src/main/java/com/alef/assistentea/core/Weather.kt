@@ -53,6 +53,25 @@ object Weather {
         return "$t° · ${describe(c.optInt("weather_code"))}"
     }
 
+    /** Para a rotina de bom dia: "Agora faz 18 graus, céu limpo. Hoje a máxima é 27 ..." */
+    fun morningSummary(city: String): String? {
+        val place = geocode(city) ?: return null
+        val j = get(
+            "https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}" +
+                "&current=temperature_2m,weather_code" +
+                "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
+                "&timezone=auto&forecast_days=1"
+        ) ?: return null
+        val c = j.optJSONObject("current") ?: return null
+        val d = j.optJSONObject("daily") ?: return null
+        val now = Math.round(c.optDouble("temperature_2m")).toInt()
+        val max = Math.round(d.getJSONArray("temperature_2m_max").optDouble(0)).toInt()
+        val min = Math.round(d.getJSONArray("temperature_2m_min").optDouble(0)).toInt()
+        val rain = d.getJSONArray("precipitation_probability_max").optInt(0)
+        val sky = describe(d.getJSONArray("weather_code").optInt(0))
+        return "Agora faz $now graus. Hoje: $sky, mínima de $min e máxima de $max, com $rain por cento de chance de chuva."
+    }
+
     private data class Place(val name: String, val lat: Double, val lon: Double)
 
     private fun geocode(city: String): Place? {

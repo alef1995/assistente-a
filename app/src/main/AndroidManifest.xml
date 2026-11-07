@@ -22,6 +22,8 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- Atualizar o app pelo próprio app, sem desinstalar -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Lembretes no horário exato -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <!-- Timer e despertador no app Relógio -->
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
 
@@ -144,6 +146,11 @@
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
         </receiver>
+
+        <!-- Hora de um lembrete -->
+        <receiver
+            android:name=".service.ReminderReceiver"
+            android:exported="false" />
 
         <!-- Resposta do instalador durante a atualização -->
         <receiver

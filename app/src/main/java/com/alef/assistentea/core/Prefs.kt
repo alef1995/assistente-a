@@ -42,6 +42,11 @@ class Prefs(context: Context) {
         get() = sp.getString("city", "") ?: ""
         set(v) = sp.edit().putString("city", v.trim()).apply()
 
+    /** Música da rotina de bom dia (vazio = sem música). */
+    var morningMusic: String
+        get() = sp.getString("morning_music", "") ?: ""
+        set(v) = sp.edit().putString("morning_music", v.trim()).apply()
+
     /** Tocar um bipe quando a Zuri for chamada (como a Zuri). */
     var wakeBeep: Boolean
         get() = sp.getBoolean("wake_beep", true)

@@ -107,6 +107,22 @@ class CommandParserTest {
         assertEquals(Command.SetVolume(35), cmd("volume 35"))
     }
 
+    /** Frases como o reconhecedor offline entrega: nome + comando, de uma vez. */
+    @Test fun comandoDeUmaVez() {
+        fun offline(t: String) = CommandParser.parse(CommandParser.findWake(t)!!).command
+        assertEquals(Command.SetVolume(30), offline("zuri volume três"))
+        assertEquals(Command.SetVolume(70), offline("zuri coloca o volume no sete"))
+        assertEquals(Command.SetVolume(100), offline("zuri volume máximo"))
+        assertEquals(Command.Pause, offline("zuri pausa a música"))
+        assertEquals(Command.Stop, offline("zuri para"))
+        assertEquals(Command.Next, offline("zuri pula essa"))
+        assertEquals(Command.Previous, offline("zuri música anterior"))
+        assertEquals(Command.VolumeDown, offline("zuri abaixa o volume"))
+        assertEquals(Command.MorningRoutine, offline("zuri bom dia"))
+        assertEquals(Command.Flashlight(true), offline("zuri liga a lanterna"))
+        assertEquals(Command.Time, offline("zuri que horas são"))
+    }
+
     @Test fun volume() {
         assertEquals(Command.VolumeUp, cmd("Zuri, aumentar volume."))
         assertEquals(Command.VolumeDown, cmd("Zuri, diminuir volume."))
@@ -155,7 +171,9 @@ class CommandParserTest {
     @Test fun conversa() {
         assertEquals(Command.Joke, cmd("Zuri, conta uma piada"))
         assertEquals(Command.Thanks, cmd("obrigado"))
-        assertEquals(Command.Greeting, cmd("Zuri, bom dia"))
+        assertEquals(Command.MorningRoutine, cmd("Zuri, bom dia"))
+        assertEquals(Command.MorningRoutine, cmd("bom dia"))
+        assertEquals(Command.Greeting, cmd("boa noite"))
         assertEquals(Command.StopListening, cmd("Zuri, pode parar de ouvir"))
         assertEquals(Command.StopListening, cmd("tchau"))
         assertEquals(Command.Cancel, cmd("deixa pra lá"))

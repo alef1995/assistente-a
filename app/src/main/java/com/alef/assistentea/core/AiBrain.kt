@@ -21,7 +21,9 @@ import java.util.Locale
  *
  * Os comandos simples ("pausar", "volume 5") NÃO passam por aqui: continuam instantâneos e offline.
  */
-class AiBrain(private val prefs: Prefs) {
+class AiBrain(context: android.content.Context, private val prefs: Prefs) {
+
+    private val organizer = Organizer(context)
 
     /** Resposta da IA: um texto para falar e/ou uma ação para executar. */
     data class Answer(val text: String?, val command: Command?)
@@ -48,7 +50,10 @@ class AiBrain(private val prefs: Prefs) {
         }
         private const val MEMORY_MS = 5 * 60 * 1000L   // lembra da conversa por 5 minutos
         private const val MAX_HISTORY = 12
-        private val INFO_TOOLS = setOf("get_weather")
+        private val INFO_TOOLS = setOf(
+            "get_weather", "get_news", "add_reminder", "list_reminders", "cancel_reminder",
+            "shopping_list_add", "shopping_list_remove", "shopping_list_read", "shopping_list_clear"
+        )
     }
 
     val isConfigured: Boolean get() = prefs.aiKey.isNotBlank()
@@ -125,7 +130,29 @@ class AiBrain(private val prefs: Prefs) {
                 Weather.forecast(city, a.optInt("days", 3))
             }
         }
+        "get_news" -> News.headlines(a.optString("topic").takeIf { it.isNotBlank() && it != "null" })
+        "add_reminder" -> {
+            val text = a.optString("text").ifBlank { "lembrete" }
+            val minutes = a.optInt("in_minutes", 0)
+            val at = if (minutes > 0) System.currentTimeMillis() + minutes * 60_000L
+            else organizer.parseLocal(a.optString("when"))
+            if (at == null) "Horário não entendido. Pergunte ao usuário o horário."
+            else organizer.addReminder(text, at) +
+                if (organizer.canBeExact()) "" else " (Aviso: pode atrasar alguns minutos; permita alarmes exatos nas configurações da Zuri.)"
+        }
+        "list_reminders" -> organizer.describeReminders()
+        "cancel_reminder" -> organizer.cancelReminder(a.optString("text"))
+        "shopping_list_add" -> organizer.addToList(items(a))
+        "shopping_list_remove" -> organizer.removeFromList(items(a))
+        "shopping_list_read" -> organizer.describeList()
+        "shopping_list_clear" -> organizer.clearList()
         else -> "Ferramenta desconhecida."
+    }
+
+    private fun items(a: JSONObject): List<String> {
+        val arr = a.optJSONArray("items")
+        if (arr != null) return (0 until arr.length()).map { arr.optString(it) }
+        return a.optString("items").split(",").map { it.trim() }.filter { it.isNotBlank() }
     }
 
     private fun toAnswer(msg: JSONObject): Answer {
@@ -191,7 +218,8 @@ use a ferramenta certa em vez de responder com texto. Se a pessoa disser só um 
 música, toque. Para músicas por estilo ou clima ("algo animado", "pra relaxar"), escolha um termo de
 busca bom (ex.: "pagode anos 90", "músicas relaxantes MPB"). Volume vai de 1 (mais baixo) a 10 (máximo).
 Para clima, temperatura ou chuva, use a ferramenta get_weather e responda com os números (temperatura e chance de chuva).
-Se não souber algo atual (notícias, resultados), diga com franqueza que não tem acesso a isso agora.
+Para notícias e resultados de jogos, use get_news e resuma em até 2 frases o que as manchetes dizem (com o placar, se houver);
+não invente nada que não esteja nas manchetes. Para lembretes e lista de compras, use as ferramentas e confirme em uma frase curta.
 Agora: $now.
 Cidade da casa: ${prefs.city.ifBlank { "não informada" }}.
 Situação: $context
@@ -224,6 +252,25 @@ Situação: $context
             JSONObject()
                 .put("city", prop("string", "Cidade; vazio = cidade da casa"))
                 .put("days", prop("integer", "Quantos dias de previsão (1 a 7)"))))
+        put(tool("get_news", "Buscar manchetes de notícias recentes do Brasil, ou sobre um assunto/time (ex.: 'Cruzeiro', 'jogo do Atlético', 'eleições'). Use para notícias e resultados de jogos.",
+            JSONObject().put("topic", prop("string", "Assunto; vazio = principais notícias do dia"))))
+        put(tool("add_reminder", "Criar um lembrete que a Zuri vai falar na hora marcada.",
+            JSONObject()
+                .put("text", prop("string", "O que lembrar, ex.: 'buscar o pão'"))
+                .put("when", prop("string", "Data e hora local no formato AAAA-MM-DDTHH:MM"))
+                .put("in_minutes", prop("integer", "Ou: daqui a quantos minutos")),
+            listOf("text")))
+        put(tool("list_reminders", "Ler os lembretes marcados."))
+        put(tool("cancel_reminder", "Cancelar lembretes que contenham um texto.",
+            JSONObject().put("text", prop("string", "Parte do texto do lembrete")), listOf("text")))
+        put(tool("shopping_list_add", "Adicionar itens à lista de compras.",
+            JSONObject().put("items", JSONObject().put("type", "array").put("items", JSONObject().put("type", "string"))
+                .put("description", "Itens, ex.: ['leite', 'pão']")), listOf("items")))
+        put(tool("shopping_list_remove", "Tirar itens da lista de compras.",
+            JSONObject().put("items", JSONObject().put("type", "array").put("items", JSONObject().put("type", "string"))),
+            listOf("items")))
+        put(tool("shopping_list_read", "Ler a lista de compras."))
+        put(tool("shopping_list_clear", "Apagar a lista de compras inteira."))
         put(tool("pause_music", "Pausar a música."))
         put(tool("resume_music", "Continuar a música pausada."))
         put(tool("stop_music", "Parar a música de vez."))

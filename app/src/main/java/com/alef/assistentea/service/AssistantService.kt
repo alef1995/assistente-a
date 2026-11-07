@@ -39,6 +39,7 @@ class AssistantService : Service(), AssistantEngine.Host {
         const val ACTION_BT_CONNECTED = "com.alef.assistentea.BT_CONNECTED"
         const val ACTION_BT_DISCONNECTED = "com.alef.assistentea.BT_DISCONNECTED"
         const val ACTION_STOP = "com.alef.assistentea.STOP"
+        const val ACTION_REMINDER = "com.alef.assistentea.REMINDER"
 
         private const val CHANNEL_RUNNING = "a_running"
         const val CHANNEL_ALERTS = "a_alerts"
@@ -129,6 +130,7 @@ class AssistantService : Service(), AssistantEngine.Host {
             ACTION_CONTINUOUS_OFF -> engine.setContinuous(false)
             ACTION_TOGGLE_CONTINUOUS -> engine.setContinuous(!engine.continuous)
             ACTION_BT_DISCONNECTED -> if (engine.startedByBluetooth) engine.setContinuous(false) else onEngineIdleIfQuiet()
+            ACTION_REMINDER -> intent?.getStringExtra(ReminderReceiver.EXTRA_TEXT)?.let { engine.announce("Lembrete: $it") }
             ACTION_STOP -> {
                 engine.setContinuous(false)
                 stopEverything()
