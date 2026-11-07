@@ -35,7 +35,7 @@ class YouTubePlayer(private val context: Context, private val pkg: String) {
         data object Failed : Outcome()
     }
 
-    private data class Video(val id: String, val title: String?)
+    data class Video(val id: String, val title: String?)
 
     private val main = Handler(Looper.getMainLooper())
 
@@ -68,7 +68,14 @@ class YouTubePlayer(private val context: Context, private val pkg: String) {
 
     // ------------------------------------------------------------------ 1) pesquisa
 
-    private fun search(term: String): Video? {
+    /** Primeiro resultado da busca. */
+    private fun search(term: String): Video? = searchMany(term, 1).firstOrNull()
+
+    /**
+     * Pesquisa no YouTube e devolve os primeiros vídeos (sem anúncios).
+     * Chame fora da thread principal (usa a internet).
+     */
+    fun searchMany(term: String, max: Int = 10): List<Video> {
         val url = URL(
             "https://www.youtube.com/results?search_query=" + URLEncoder.encode(term, "UTF-8") + "&hl=pt-BR&gl=BR"
         )
@@ -83,7 +90,7 @@ class YouTubePlayer(private val context: Context, private val pkg: String) {
             setRequestProperty("Cookie", "CONSENT=YES+1; SOCS=CAI")
         }
         try {
-            if (conn.responseCode != 200) return null
+            if (conn.responseCode != 200) return emptyList()
             val html = conn.inputStream.bufferedReader().use { r ->
                 val buf = CharArray(16 * 1024)
                 val sb = StringBuilder()
@@ -91,19 +98,27 @@ class YouTubePlayer(private val context: Context, private val pkg: String) {
                     val n = r.read(buf)
                     if (n < 0) break
                     sb.append(buf, 0, n)
-                    if (RENDERER.containsMatchIn(sb)) break // já achou o primeiro vídeo
                 }
                 sb.toString()
             }
-            val m = RENDERER.find(html) ?: ANY_VIDEO.find(html) ?: return null
-            val id = m.groupValues[1]
-            val title = Regex("\"title\":\\{\"runs\":\\[\\{\"text\":\"([^\"]{1,120})\"")
-                .find(html, m.range.last)?.groupValues?.get(1)
-            return Video(id, title)
+            val titleRe = Regex("\"title\":\\{\"runs\":\\[\\{\"text\":\"([^\"]{1,120})\"")
+            val found = LinkedHashMap<String, String?>()
+            for (m in RENDERER.findAll(html)) {
+                val id = m.groupValues[1]
+                if (id in found) continue
+                found[id] = titleRe.find(html, m.range.last)?.groupValues?.get(1)?.let(::unescape)
+                if (found.size >= max) break
+            }
+            if (found.isEmpty()) ANY_VIDEO.find(html)?.let { found[it.groupValues[1]] = null }
+            return found.map { Video(it.key, it.value) }
         } finally {
             conn.disconnect()
         }
     }
+
+    /** "\u0026" e afins que aparecem nos títulos. */
+    private fun unescape(s: String): String =
+        s.replace("\\u0026", "&").replace("\\u0027", "'").replace("\\\"", "\"")
 
     // ------------------------------------------------------------------ 2) sem abrir o app
 

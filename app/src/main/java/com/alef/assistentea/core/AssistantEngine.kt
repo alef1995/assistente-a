@@ -48,6 +48,14 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         fun onRefresh()
     }
 
+    /** Player do YouTube dentro da tela da Alexa (quando a tela está aberta). */
+    var embedded: EmbeddedPlayer? = null
+
+    /** O player embutido está com músicas? Então pausar/próxima/etc. vão para ele. */
+    private val usingEmbedded: Boolean get() = embedded?.isActive == true
+
+    private fun musicPlaying(): Boolean = (embedded?.isPlaying == true) || media.isMusicPlaying()
+
     var ui: Ui? = null
         set(value) {
             field = value
@@ -181,7 +189,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         main.removeCallbacks(relisten)
         manualTrigger = manual
         // Abaixa a música para o microfone ouvir melhor
-        if (manual && duckedIndex == null && media.isMusicPlaying()) {
+        if (manual && duckedIndex == null && musicPlaying()) {
             duckedIndex = volume.duck(15)
         }
         ui?.onHeard("")
@@ -352,11 +360,11 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         when (cmd) {
             is Command.Play -> playMusic(cmd)
 
-            Command.Pause -> { media.pause(); reply("Pausado.") }
-            Command.Stop -> { media.stop(); reply("Música parada.") }
-            Command.Resume -> reply("Continuando.") { media.play() }
-            Command.Next -> { media.next(); reply("Próxima.") }
-            Command.Previous -> { media.previous(); reply("Música anterior.") }
+            Command.Pause -> { if (usingEmbedded) embedded?.pause() else media.pause(); reply("Pausado.") }
+            Command.Stop -> { if (usingEmbedded) embedded?.stop() else media.stop(); reply("Música parada.") }
+            Command.Resume -> reply("Continuando.") { if (usingEmbedded) embedded?.resume() else media.play() }
+            Command.Next -> reply("Próxima.") { if (usingEmbedded) embedded?.next() else media.next() }
+            Command.Previous -> reply("Música anterior.") { if (usingEmbedded) embedded?.previous() else media.previous() }
 
             Command.VolumeUp -> reply("Volume em ${volume.up()} por cento.")
             Command.VolumeDown -> reply("Volume em ${volume.down()} por cento.")
@@ -369,7 +377,9 @@ class AssistantEngine(private val context: Context, private val host: Host) :
 
             Command.NowPlaying -> {
                 val t = media.nowPlaying()
+                val e = embedded
                 when {
+                    e != null && e.isActive && e.title != null -> reply("Está tocando ${e.title}.")
                     t != null -> reply("Está tocando ${t.title}" + (t.artist?.let { ", de $it" } ?: "") + ".")
                     !media.hasNotificationAccess() ->
                         reply("Para eu saber o nome da música, abra a Alexa e toque em \"Permitir mostrar a música atual\".")
@@ -467,6 +477,26 @@ class AssistantEngine(private val context: Context, private val host: Host) :
     /** YouTube (Morphe): a Alexa pesquisa, toca sem abrir o app se der, ou abre direto no vídeo. */
     private fun playOnYouTube(cmd: Command.Play, what: String, before: TrackInfo?) {
         showReply("Procurando $what no YouTube…")
+        val player = embedded
+        if (player != null && player.isReady) {
+            // Toca dentro da tela da Alexa, sem abrir o app do YouTube
+            val yt = music.youTube()
+            val term = music.youTubeTerm(cmd.query, cmd.artist)
+            Thread {
+                val videos = try { yt.searchMany(term, if (cmd.artist != null) 15 else 8) } catch (_: Exception) { emptyList() }
+                main.post {
+                    if (videos.isEmpty()) {
+                        reply("Não consegui pesquisar no YouTube. Confira a internet do tablet.", error = true)
+                    } else {
+                        if (media.isMusicPlaying()) media.pause() // para outro player que esteja tocando
+                        player.playQueue(videos.map { it.id }, videos.map { it.title })
+                        showReply("▶ " + (videos.first().title ?: what))
+                    }
+                    ui?.onRefresh()
+                }
+            }.start()
+            return
+        }
         music.youTube().play(music.youTubeTerm(cmd.query, cmd.artist)) { outcome ->
             when (outcome) {
                 YouTubePlayer.Outcome.PlayingInBackground -> showReply("▶ $what · YouTube")

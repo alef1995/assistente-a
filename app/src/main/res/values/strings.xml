@@ -27,4 +27,6 @@
     <string name="tablet_mode">Modo tablet: tela sempre ligada e Alexa sempre ativa</string>
     <string name="tablet_mode_hint">Liga sozinha quando o tablet reinicia. Ideal para deixar o tablet fixo, na tomada.</string>
     <string name="battery_exempt">Não deixar o Android fechar a Alexa (bateria sem restrições)</string>
+    <string name="update_now">Atualizar</string>
+    <string name="check_update">Procurar atualização</string>
 </resources>

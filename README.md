@@ -33,7 +33,11 @@ Assistente pessoal em português do Brasil que controla músicas e volume por vo
 | "Pode parar de ouvir" · "tchau" | Desliga a escuta contínua |
 | "Ajuda" | Lista os comandos |
 
-**Player de música:** o **YouTube (Morphe)** (`app.morphe.android.youtube`) é o player padrão quando está instalado — toda música pedida vai para ele. No modo tablet, quando a música começa, a tela da Alexa volta para a frente e o YouTube segue tocando em segundo plano. Dá para trocar o player nas configurações.
+**Música dentro da tela da Alexa:** a Alexa pesquisa no YouTube e toca com o **player oficial do YouTube embutido** num cartão de vídeo no canto da tela — o app do YouTube não abre. Para artista, monta uma fila com os primeiros resultados; vídeos bloqueados fora do YouTube são pulados.
+
+**Atualização sem desinstalar:** a Alexa confere no GitHub se há versão nova e mostra o botão "Atualizar" no alto da tela (ou "Procurar atualização" nas configurações). Ela baixa e o Android só pede para confirmar.
+
+**Plano B (tela da Alexa fechada):** o **YouTube (Morphe)** (`app.morphe.android.youtube`) é o player padrão quando está instalado — toda música pedida vai para ele. No modo tablet, quando a música começa, a tela da Alexa volta para a frente e o YouTube segue tocando em segundo plano. Dá para trocar o player nas configurações.
 
 **Modo tablet (padrão)**
 

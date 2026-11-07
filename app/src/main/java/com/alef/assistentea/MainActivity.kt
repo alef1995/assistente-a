@@ -30,6 +30,8 @@ import com.alef.assistentea.media.VolumeController
 import com.alef.assistentea.music.MusicLauncher
 import com.alef.assistentea.service.Activation
 import com.alef.assistentea.service.AssistantService
+import com.alef.assistentea.core.Updater
+import com.alef.assistentea.ui.EmbeddedYouTube
 import com.alef.assistentea.ui.WaveView
 
 /**
@@ -58,6 +60,11 @@ class MainActivity : Activity(), AssistantEngine.Ui {
     private lateinit var settingsPanel: View
     private lateinit var tabletSwitch: Switch
     private lateinit var batteryButton: TextView
+    private lateinit var updateButton: TextView
+    private lateinit var youtube: EmbeddedYouTube
+    private lateinit var updater: Updater
+    private var release: Updater.Release? = null
+    private var checkedUpdate = false
     private lateinit var statusText: TextView
     private lateinit var heardText: TextView
     private lateinit var replyText: TextView
@@ -82,6 +89,7 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             val e = (service as AssistantService.LocalBinder).engine
             engine = e
+            e.embedded = youtube
             e.ui = this@MainActivity
         }
 
@@ -101,6 +109,16 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         settingsPanel = findViewById(R.id.settingsPanel)
         tabletSwitch = findViewById(R.id.tabletSwitch)
         batteryButton = findViewById(R.id.batteryButton)
+        updateButton = findViewById(R.id.updateButton)
+        updater = Updater(this)
+
+        // Player do YouTube dentro da tela (a música toca aqui, sem abrir o app do YouTube)
+        val videoCard = findViewById<View>(R.id.videoCard)
+        videoCard.clipToOutline = true
+        youtube = EmbeddedYouTube(findViewById(R.id.youtubeWeb), videoCard) {
+            showTrack(media.nowPlaying())
+        }
+        youtube.init()
         statusText = findViewById(R.id.statusText)
         heardText = findViewById(R.id.heardText)
         replyText = findViewById(R.id.replyText)
@@ -145,11 +163,30 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         }
 
         playPauseButton.setOnClickListener {
-            if (media.isMusicPlaying()) media.pause() else media.play()
+            when {
+                youtube.isActive -> if (youtube.isPlaying) youtube.pause() else youtube.resume()
+                media.isMusicPlaying() -> media.pause()
+                else -> media.play()
+            }
             main.postDelayed({ refreshPlayButton() }, 500)
         }
-        findViewById<ImageButton>(R.id.nextButton).setOnClickListener { media.next() }
-        findViewById<ImageButton>(R.id.prevButton).setOnClickListener { media.previous() }
+        findViewById<ImageButton>(R.id.nextButton).setOnClickListener {
+            if (youtube.isActive) youtube.next() else media.next()
+        }
+        findViewById<ImageButton>(R.id.prevButton).setOnClickListener {
+            if (youtube.isActive) youtube.previous() else media.previous()
+        }
+
+        updateButton.setOnClickListener { installUpdate() }
+        findViewById<TextView>(R.id.checkUpdateButton).setOnClickListener {
+            onReply("Procurando atualização…", false)
+            updater.check { r ->
+                release = r
+                showUpdateButton()
+                if (r == null) onReply("A Alexa já está na versão mais nova (${updater.currentVersion()}).", false)
+                else installUpdate()
+            }
+        }
         findViewById<ImageButton>(R.id.volUpButton).setOnClickListener { volume.up(); refreshVolume() }
         findViewById<ImageButton>(R.id.volDownButton).setOnClickListener { volume.down(); refreshVolume() }
 
@@ -264,7 +301,7 @@ class MainActivity : Activity(), AssistantEngine.Ui {
 
     override fun onStart() {
         super.onStart()
-        bound = bindService(Intent(this, AssistantService::class.java), connection, Context.BIND_AUTO_CREATE)
+        if (!bound) bound = bindService(Intent(this, AssistantService::class.java), connection, Context.BIND_AUTO_CREATE)
     }
 
     override fun onResume() {
@@ -284,6 +321,11 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         }
         media.observe { showTrack(it) }
         updatePlayerChip()
+        // Procura versão nova uma vez por abertura
+        if (!checkedUpdate) {
+            checkedUpdate = true
+            updater.check { r -> release = r; showUpdateButton() }
+        }
     }
 
     override fun onPause() {
@@ -291,17 +333,16 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         media.stopObserving()
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onDestroy() {
+        // A conexão com o serviço fica aberta enquanto a tela existir: o player do YouTube mora aqui
         engine?.ui = null
+        engine?.embedded = null
         engine = null
         if (bound) {
             unbindService(connection)
             bound = false
         }
-    }
-
-    override fun onDestroy() {
+        youtube.destroy()
         super.onDestroy()
         main.removeCallbacksAndMessages(null)
     }
@@ -416,7 +457,42 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         updatingSwitch = false
     }
 
+    // ================================================================== atualização
+
+    private fun showUpdateButton() {
+        val r = release
+        updateButton.visibility = if (r != null) View.VISIBLE else View.GONE
+        if (r != null) updateButton.text = "Atualizar (versão ${r.version})"
+    }
+
+    private fun installUpdate() {
+        val r = release ?: return
+        if (!updater.canInstall()) {
+            onReply("Permita \"Instalar apps desconhecidos\" para a Alexa e toque em Atualizar de novo.", false)
+            openSettings(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
+            return
+        }
+        updateButton.isEnabled = false
+        onReply("Baixando a versão ${r.version}…", false)
+        updater.install(r,
+            onProgress = { pct ->
+                updateButton.text = "Baixando… $pct%"
+                if (pct >= 100) onReply("Pronto! Toque em \"Atualizar\" na janela do Android.", false)
+            },
+            onError = { msg ->
+                updateButton.isEnabled = true
+                showUpdateButton()
+                onReply(msg, true)
+            })
+    }
+
     private fun showTrack(t: TrackInfo?) {
+        if (youtube.isActive) {
+            trackTitle.text = youtube.title ?: "YouTube"
+            trackArtist.text = "YouTube · na tela da Alexa"
+            refreshPlayButton()
+            return
+        }
         if (t == null) {
             trackTitle.text = getString(R.string.nothing_playing)
             trackArtist.text = if (media.hasNotificationAccess()) "" else "Permita o acesso abaixo para ver o nome da música"
@@ -428,7 +504,8 @@ class MainActivity : Activity(), AssistantEngine.Ui {
     }
 
     private fun refreshPlayButton() {
-        playPauseButton.setImageResource(if (media.isMusicPlaying()) R.drawable.ic_pause else R.drawable.ic_play)
+        val playing = (youtube.isActive && youtube.isPlaying) || media.isMusicPlaying()
+        playPauseButton.setImageResource(if (playing) R.drawable.ic_pause else R.drawable.ic_play)
     }
 
     private fun refreshVolume() {
