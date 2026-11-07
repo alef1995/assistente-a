@@ -175,6 +175,7 @@ class MainActivity : Activity(), AssistantEngine.Ui {
                 .hideSoftInputFromWindow(aiKeyInput.windowToken, 0)
             prefs.aiKey = aiKeyInput.text.toString().replace(Regex("\\s"), "")
             prefs.city = cityInput.text.toString()
+            refreshWeather()
             aiKeyInput.setText(prefs.aiKey)
             if (prefs.aiKey.isBlank()) {
                 status("Chave apagada. A Zuri volta a usar só os comandos fixos.", false)
@@ -372,6 +373,8 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         refreshVolume()
         refreshPlayButton()
         mediaAccessButton.visibility = if (media.hasNotificationAccess()) View.GONE else View.VISIBLE
+        main.removeCallbacks(weatherRefresh)
+        main.post(weatherRefresh)
         overlayButton.visibility = if (Settings.canDrawOverlays(this)) View.GONE else View.VISIBLE
         val pm = getSystemService(PowerManager::class.java)
         batteryButton.visibility = if (pm.isIgnoringBatteryOptimizations(packageName)) View.GONE else View.VISIBLE
@@ -390,8 +393,36 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         }
     }
 
+    // ================================================================== temperatura ao lado do relógio
+
+    private val weatherRefresh = object : Runnable {
+        override fun run() {
+            refreshWeather()
+            main.postDelayed(this, 15 * 60 * 1000L)
+        }
+    }
+
+    private fun refreshWeather() {
+        val view = findViewById<TextView>(R.id.weatherNow)
+        val city = prefs.city
+        if (city.isBlank()) {
+            view.visibility = View.GONE
+            return
+        }
+        Thread {
+            val text = try { com.alef.assistentea.core.Weather.nowShort(city) } catch (_: Exception) { null }
+            main.post {
+                if (text != null) {
+                    view.text = text
+                    view.visibility = View.VISIBLE
+                }
+            }
+        }.start()
+    }
+
     override fun onPause() {
         super.onPause()
+        main.removeCallbacks(weatherRefresh)
         media.stopObserving()
     }
 

@@ -57,15 +57,33 @@
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <TextClock
-                android:id="@+id/clock"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-thin"
-                android:format12Hour="HH:mm"
-                android:format24Hour="HH:mm"
-                android:textColor="@color/text"
-                android:textSize="56sp" />
+                android:baselineAligned="true"
+                android:orientation="horizontal">
+
+                <TextClock
+                    android:id="@+id/clock"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-thin"
+                    android:format12Hour="HH:mm"
+                    android:format24Hour="HH:mm"
+                    android:textColor="@color/text"
+                    android:textSize="56sp" />
+
+                <!-- Temperatura atual (atualiza a cada 15 min) -->
+                <TextView
+                    android:id="@+id/weatherNow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:fontFamily="sans-serif-light"
+                    android:textColor="@color/cyan"
+                    android:textSize="28sp"
+                    android:visibility="gone" />
+            </LinearLayout>
 
             <TextClock
                 android:id="@+id/date"

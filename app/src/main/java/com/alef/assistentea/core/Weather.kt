@@ -41,6 +41,18 @@ object Weather {
         return sb.toString()
     }
 
+    /** Agora, em poucas palavras para a tela: "32° · garoa". Null se não conseguir. */
+    fun nowShort(city: String): String? {
+        val place = geocode(city) ?: return null
+        val j = get(
+            "https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}" +
+                "&current=temperature_2m,weather_code&timezone=auto"
+        ) ?: return null
+        val c = j.optJSONObject("current") ?: return null
+        val t = Math.round(c.optDouble("temperature_2m")).toInt()
+        return "$t° · ${describe(c.optInt("weather_code"))}"
+    }
+
     private data class Place(val name: String, val lat: Double, val lon: Double)
 
     private fun geocode(city: String): Place? {
