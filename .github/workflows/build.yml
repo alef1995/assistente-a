@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write   # necessário para publicar o APK na página de Releases
+  actions: write    # para avisar o workflow da versão para Windows
 
 concurrency:
   group: build-apk
@@ -23,6 +24,8 @@ jobs:
       # Atualização enviada como um único arquivo (projeto.b64): extrai o código
       # direto no repositório, para que as próximas mudanças sejam feitas arquivo por arquivo.
       - name: Extrair codigo enviado
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [ -f projeto.b64 ]; then
             base64 -d projeto.b64 > /tmp/projeto.tgz
@@ -35,6 +38,8 @@ jobs:
             git add -A
             git commit -q -m "Extrai o codigo do projeto no repositorio"
             git push origin HEAD:main
+            # O envio feito pelo robô não dispara outros workflows: avisa o do Windows
+            if [ -d zuri-pc ]; then gh workflow run pc.yml --ref main || true; fi
           elif [ ! -f settings.gradle.kts ]; then
             # Versão antiga: projeto dentro de um .zip
             for f in *.zip; do unzip -q -o "$f"; done
