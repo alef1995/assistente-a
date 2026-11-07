@@ -10,7 +10,7 @@ import com.alef.assistentea.media.MediaControl
 import com.alef.assistentea.media.TrackInfo
 import com.alef.assistentea.media.VolumeController
 import com.alef.assistentea.music.MusicLauncher
-import com.alef.assistentea.voice.BluetoothMic
+import com.alef.assistentea.voice.PhoneMic
 import com.alef.assistentea.voice.Speaker
 import com.alef.assistentea.voice.SpeechListener
 import com.alef.assistentea.voice.WakeWordDetector
@@ -62,7 +62,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
     private val media = MediaControl(context)
     private val music = MusicLauncher(context)
     private val device = DeviceActions(context)
-    private val btMic = BluetoothMic(context)
+    private val phoneMic = PhoneMic(context)
     private val wake = WakeWordDetector(context) { text, final -> onWakeText(text, final) }
 
     var state = State.IDLE
@@ -95,6 +95,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
     }
 
     init {
+        phoneMic.ensure()
         // Carrega o reconhecedor offline do "A" em segundo plano
         wake.load { ok -> if (ok && continuous && state == State.IDLE && !speech.isListening) main.post(relisten) }
     }
@@ -103,7 +104,6 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         override fun run() {
             if (continuous) return
             if (state == State.IDLE && !speaker.isSpeaking && !speech.isListening) {
-                btMic.release()
                 host.onEngineIdle()
             } else {
                 main.postDelayed(this, 3000) // ainda ocupada: confere de novo depois
@@ -152,7 +152,6 @@ class AssistantEngine(private val context: Context, private val host: Host) :
                 restoreDuck()
                 setState(State.IDLE)
             }
-            btMic.release()
             showReply("Escuta contínua desligada.")
             scheduleIdleCheck()
         }
@@ -165,7 +164,6 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         speech.destroy()
         speaker.shutdown()
         restoreDuck()
-        btMic.release()
     }
 
     // ================================================================== escuta
@@ -188,11 +186,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         ui?.onHeard("")
         setState(State.LISTENING)
 
-        if (prefs.speakerMic && !btMic.isActive) {
-            val ok = btMic.acquire { if (state == State.LISTENING && !speech.isListening) speech.start() }
-            if (ok) return
-            showReply("Sua caixa não tem microfone compatível. Usando o microfone do celular.", error = true)
-        }
+        phoneMic.ensure() // sempre o microfone do celular, nunca o da caixa
         speech.start()
     }
 
@@ -207,7 +201,6 @@ class AssistantEngine(private val context: Context, private val host: Host) :
     }
 
     private fun afterTurn(delay: Long = 400) {
-        if (!continuous && btMic.isActive) btMic.release()
         if (continuous) main.postDelayed(relisten, delay) else scheduleIdleCheck()
     }
 

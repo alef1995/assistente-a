@@ -38,7 +38,7 @@ Assistente pessoal em português do Brasil que controla músicas e volume por vo
 - **Escuta contínua:** diga **"Alexa"** a qualquer momento — **funciona com a tela apagada**. Ela responde "Oi!" / "Oi, boa noite!", você faz o pedido e ela repete antes de executar ("Tocando Alcione"). Sem dizer "Alexa", a música segue normalmente.
 - Enquanto espera o nome, ela usa um reconhecedor **offline** (Vosk) que não mexe na música; o Google só é usado para entender o pedido depois do "Oi".
 - **Ligar sozinha com a caixa Bluetooth:** conectou a caixa, a A começa a ouvir; desconectou, ela para (poupa bateria).
-- **Microfone da caixa (experimental):** para caixas com microfone. Enquanto a A ouve por ela, o som fica com qualidade de ligação (limitação do Bluetooth).
+- **Microfone:** sempre o do celular onde o app está instalado (o da caixa Bluetooth é fraco e derruba a qualidade do som). Deixe o celular perto de onde você fala.
 - **Widget** na tela inicial (microfone + "ouvir sempre"), **atalhos** segurando o ícone, e **botão de assistente** (segurar o botão de início, se a A for escolhida como app assistente).
 
 A A entende melhor do que antes: corrige erros comuns do reconhecimento de voz ("Atocar", "Aproxima", "posar", "almentar o valume") e dá dicas ao reconhecedor sobre as palavras de comando (Android 13+).
@@ -70,7 +70,7 @@ Widget / atalhos ────┤                      ├─ CommandParser    fr
 Caixa Bluetooth ─────┼─► AssistantService ──┤  AssistantEngine  ouve → entende → executa → responde
 Botão assistente ────┘   (1º plano, tela    ├─ VolumeController / MediaControl / MusicLauncher
                           apagada)          ├─ DeviceActions    hora, data, bateria, timer, alarme, lanterna, abrir apps
-                                            ├─ BluetoothMic     microfone da caixa (opcional)
+                                            ├─ PhoneMic         garante o microfone do celular
                                             └─ Speaker          respostas faladas, com a música abaixando
 ```
 
@@ -90,7 +90,7 @@ Nenhum computador é necessário. O APK é assinado com uma chave fixa de depura
 - **Reconhecimento de voz usa o Google** e precisa de internet. Em alguns aparelhos o Android toca um "bip" a cada reinício do microfone na escuta contínua.
 - **"A" é uma palavra muito curta** para palavra de ativação: na escuta contínua, a A só age se a frase começar com "A" **e** for um comando reconhecido.
 - **Ligar sozinha com a caixa:** desde o Android 11, um app em segundo plano não pode ligar o microfone sozinho. Com "exibir sobre outros apps" permitido, a A abre por um instante uma tela invisível e liga; sem a permissão, aparece uma notificação para tocar.
-- **Microfone da caixa:** depende da caixa ter microfone para chamadas (perfil HFP). Enquanto ativo, o som perde qualidade.
+- **Microfone do celular:** se o app Google estiver configurado para gravar por fones Bluetooth, ele pode tentar usar o microfone da caixa no pedido; desative isso nas configurações de voz do app Google.
 - **"Tocar X" abre o app de música** na primeira vez; **Spotify gratuito** pode tocar o artista em modo aleatório.
 
 ## Próximas fases

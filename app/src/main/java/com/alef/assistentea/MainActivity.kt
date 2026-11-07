@@ -63,7 +63,6 @@ class MainActivity : Activity(), AssistantEngine.Ui {
     private lateinit var overlayButton: TextView
     private lateinit var continuousSwitch: Switch
     private lateinit var bluetoothSwitch: Switch
-    private lateinit var speakerMicSwitch: Switch
 
     private val main = Handler(Looper.getMainLooper())
     private var engine: AssistantEngine? = null
@@ -105,7 +104,6 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         overlayButton = findViewById(R.id.overlayButton)
         continuousSwitch = findViewById(R.id.continuousSwitch)
         bluetoothSwitch = findViewById(R.id.bluetoothSwitch)
-        speakerMicSwitch = findViewById(R.id.speakerMicSwitch)
 
         volume = VolumeController(this)
         media = MediaControl(this)
@@ -175,16 +173,6 @@ class MainActivity : Activity(), AssistantEngine.Ui {
                         "Pronto! Para ligar sem precisar tocar na notificação, permita \"exibir sobre outros apps\" abaixo.",
                     false
                 )
-            }
-        }
-
-        speakerMicSwitch.isChecked = prefs.speakerMic
-        speakerMicSwitch.setOnCheckedChangeListener { _, checked ->
-            prefs.speakerMic = checked
-            if (checked && Build.VERSION.SDK_INT >= 31 &&
-                checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED
-            ) {
-                requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), REQ_BT)
             }
         }
 

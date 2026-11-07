@@ -12,8 +12,6 @@
     <string name="continuous_hint">Funciona com a tela apagada. Uma notificação fixa mostra que a Alexa está ouvindo.</string>
     <string name="auto_bluetooth">Ligar sozinha com a caixa Bluetooth</string>
     <string name="auto_bluetooth_hint">Conectou a caixa → a Alexa começa a ouvir. Desconectou → para, e poupa a bateria.</string>
-    <string name="speaker_mic">Ouvir pelo microfone da caixa (experimental)</string>
-    <string name="speaker_mic_hint">Só para caixas com microfone. Enquanto a Alexa ouve por ela, o som fica com qualidade de ligação.</string>
     <string name="grant_overlay">Permitir que a Alexa ligue sozinha (exibir sobre outros apps)</string>
     <string name="set_assistant">Usar a Alexa como assistente do celular</string>
     <string name="widget_label">Falar com a Alexa</string>

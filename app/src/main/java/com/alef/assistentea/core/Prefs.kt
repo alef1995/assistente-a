@@ -12,11 +12,6 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("auto_bluetooth", false)
         set(v) = sp.edit().putBoolean("auto_bluetooth", v).apply()
 
-    /** Ouvir pelo microfone da caixa Bluetooth (quando ela tiver um). */
-    var speakerMic: Boolean
-        get() = sp.getBoolean("speaker_mic", false)
-        set(v) = sp.edit().putBoolean("speaker_mic", v).apply()
-
     /** Tocar um bipe quando a Alexa for chamada (como a Alexa). */
     var wakeBeep: Boolean
         get() = sp.getBoolean("wake_beep", true)
