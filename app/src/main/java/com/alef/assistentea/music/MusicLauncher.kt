@@ -23,7 +23,12 @@ class MusicLauncher(private val context: Context) {
     sealed class Result {
         /** O app de música recebeu o pedido e deve começar a tocar.
          *  [viaSession] = pedido enviado em segundo plano, sem abrir o app (vale conferir se tocou). */
-        data class Started(val playerLabel: String, val viaSession: Boolean = false) : Result()
+        data class Started(
+            val playerLabel: String,
+            val viaSession: Boolean = false,
+            /** App de vídeo (YouTube): abre por cima da tela da Alexa. */
+            val videoApp: Boolean = false
+        ) : Result()
         /** Nenhum app aceitou tocar direto; abrimos a busca para o usuário tocar. */
         data class OpenedSearch(val playerLabel: String) : Result()
         /** Nenhum app de música encontrado. */
@@ -31,7 +36,11 @@ class MusicLauncher(private val context: Context) {
     }
 
     companion object {
+        /** YouTube modificado pelo Morphe (toca em segundo plano e sem anúncios): player principal da Alexa. */
+        val MORPHE_YOUTUBE = Player("app.morphe.android.youtube", "YouTube (Morphe)")
+
         val KNOWN_PLAYERS = listOf(
+            MORPHE_YOUTUBE,
             Player("com.spotify.music", "Spotify"),
             Player("com.google.android.apps.youtube.music", "YouTube Music"),
             Player("deezer.android.app", "Deezer"),
@@ -46,10 +55,11 @@ class MusicLauncher(private val context: Context) {
 
     fun installedPlayers(): List<Player> = KNOWN_PLAYERS.filter { isInstalled(it.packageName) }
 
-    /** Player escolhido pelo usuário, ou null para "automático". */
+    /** Player escolhido pelo usuário. Sem escolha, é sempre o YouTube Morphe (se instalado). */
     var preferredPlayer: Player?
         get() {
-            val pkg = prefs.getString(KEY_PLAYER, null) ?: return null
+            val pkg = prefs.getString(KEY_PLAYER, null)
+                ?: return MORPHE_YOUTUBE.takeIf { isInstalled(it.packageName) }
             return installedPlayers().firstOrNull { it.packageName == pkg }
         }
         set(value) {
@@ -66,6 +76,11 @@ class MusicLauncher(private val context: Context) {
     }
 
     fun play(query: String, artist: String?, media: MediaControl? = null): Result {
+        // YouTube Morphe escolhido (padrão quando instalado): toda música vai para ele
+        if (preferredPlayer?.packageName == MORPHE_YOUTUBE.packageName) {
+            return playOnYouTube(MORPHE_YOUTUBE, query, artist)
+        }
+
         // 0) Player de música já aberto (ex.: Spotify) que aceita o pedido pela sessão de mídia:
         //    toca sem abrir a tela dele.
         if (media != null) {
@@ -102,6 +117,29 @@ class MusicLauncher(private val context: Context) {
         val yt = Intent(Intent.ACTION_VIEW, Uri.parse("https://music.youtube.com/search?q=" + Uri.encode(searchTerm)))
         if (start(yt)) return Result.OpenedSearch("YouTube Music")
 
+        return Result.NoPlayer
+    }
+
+    /**
+     * Pede a música ao YouTube (Morphe). Ele aceita o mesmo pedido oficial "tocar a partir de uma busca"
+     * (tela de busca de mídia dele). Se não aceitar, abre a busca do YouTube com o termo.
+     */
+    private fun playOnYouTube(p: Player, query: String, artist: String?): Result {
+        // Artista: pede "músicas" para vir uma sequência, não um vídeo qualquer
+        val term = artist?.let { "$it músicas" } ?: query
+        val play = Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH).apply {
+            setPackage(p.packageName)
+            putExtra(SearchManager.QUERY, term)
+            putExtra(MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/*")
+        }
+        if (canHandle(play) && start(play)) return Result.Started(p.label, videoApp = true)
+
+        val search = Intent(Intent.ACTION_SEARCH).setPackage(p.packageName).putExtra(SearchManager.QUERY, term)
+        if (canHandle(search) && start(search)) return Result.OpenedSearch(p.label)
+
+        val web = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(term)))
+            .setPackage(p.packageName)
+        if (start(web)) return Result.OpenedSearch(p.label)
         return Result.NoPlayer
     }
 

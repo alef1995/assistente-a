@@ -51,6 +51,7 @@
         <intent>
             <action android:name="android.intent.action.SET_ALARM" />
         </intent>
+        <package android:name="app.morphe.android.youtube" />
         <package android:name="com.spotify.music" />
         <package android:name="com.google.android.apps.youtube.music" />
         <package android:name="deezer.android.app" />

@@ -449,6 +449,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
                 is MusicLauncher.Result.Started -> {
                     showReply("▶ $what · ${result.playerLabel}")
                     if (result.viaSession) verifySessionPlayback(cmd, before)
+                    if (result.videoApp) returnToAlexaWhenPlaying(before)
                 }
                 is MusicLauncher.Result.OpenedSearch ->
                     showReply("Abri a busca no ${result.playerLabel}. Toque na música para começar.")
@@ -456,6 +457,31 @@ class AssistantEngine(private val context: Context, private val host: Host) :
                     reply("Não encontrei um app de música. Instale o Spotify ou o YouTube Music.", error = true)
             }
         }
+    }
+
+    /**
+     * O YouTube abre por cima da tela. No modo tablet, quando a música já estiver tocando,
+     * a tela da Alexa (ondas) volta para a frente e o YouTube (Morphe) continua tocando em segundo plano.
+     * Se ainda não estiver tocando (ex.: abriu só a lista de resultados), deixa o YouTube na tela.
+     */
+    private fun returnToAlexaWhenPlaying(before: TrackInfo?, attempt: Int = 0) {
+        if (!prefs.tabletMode) return
+        main.postDelayed({
+            val now = media.nowPlaying()
+            val started = now != null && now.playing && (before == null || now.title != before.title || !before.playing)
+            when {
+                started -> try {
+                    context.startActivity(
+                        android.content.Intent(context, com.alef.assistentea.MainActivity::class.java)
+                            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or
+                                android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                    )
+                } catch (_: Exception) {
+                }
+                attempt < 3 -> returnToAlexaWhenPlaying(before, attempt + 1)
+                else -> showReply("Se a música não começou, toque nela no YouTube.")
+            }
+        }, if (attempt == 0) 6000L else 3000L)
     }
 
     /**

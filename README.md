@@ -33,6 +33,8 @@ Assistente pessoal em português do Brasil que controla músicas e volume por vo
 | "Pode parar de ouvir" · "tchau" | Desliga a escuta contínua |
 | "Ajuda" | Lista os comandos |
 
+**Player de música:** o **YouTube (Morphe)** (`app.morphe.android.youtube`) é o player padrão quando está instalado — toda música pedida vai para ele. No modo tablet, quando a música começa, a tela da Alexa volta para a frente e o YouTube segue tocando em segundo plano. Dá para trocar o player nas configurações.
+
 **Modo tablet (padrão)**
 
 - Tela cheia com relógio, **ondas azuis animadas** que reagem à sua voz e à fala da Alexa, e a música tocando no rodapé.
