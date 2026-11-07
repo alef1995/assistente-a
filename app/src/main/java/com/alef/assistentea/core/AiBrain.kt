@@ -30,9 +30,22 @@ class AiBrain(private val prefs: Prefs) {
     private val history = mutableListOf<JSONObject>()
     private var lastUse = 0L
 
+    /** Serviço de IA, descoberto pelo começo da chave que o usuário colou. */
+    data class Provider(val name: String, val url: String, val model: String)
+
     companion object {
         const val DEFAULT_MODEL = "openai/gpt-oss-120b"
-        private const val URL_CHAT = "https://api.groq.com/openai/v1/chat/completions"
+
+        /** gsk_ = Groq · sk-or- = OpenRouter · AIza = Google (Gemini). Todos com plano grátis. */
+        fun providerFor(key: String): Provider = when {
+            key.startsWith("sk-or-") -> Provider(
+                "OpenRouter", "https://openrouter.ai/api/v1/chat/completions", "openrouter/free"
+            )
+            key.startsWith("AIza") -> Provider(
+                "Gemini", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", "gemini-2.5-flash"
+            )
+            else -> Provider("Groq", "https://api.groq.com/openai/v1/chat/completions", DEFAULT_MODEL)
+        }
         private const val MEMORY_MS = 5 * 60 * 1000L   // lembra da conversa por 5 minutos
         private const val MAX_HISTORY = 12
     }
@@ -76,7 +89,8 @@ class AiBrain(private val prefs: Prefs) {
     // ------------------------------------------------------------------ chamada à IA
 
     private fun call(messages: List<JSONObject>, context: String): Answer {
-        val model = prefs.aiModel.ifBlank { DEFAULT_MODEL }
+        val provider = providerFor(prefs.aiKey.trim())
+        val model = prefs.aiModel.ifBlank { provider.model }
         val body = JSONObject().apply {
             put("model", model)
             put("messages", JSONArray().apply {
@@ -90,22 +104,30 @@ class AiBrain(private val prefs: Prefs) {
             if (model.startsWith("openai/gpt-oss")) put("reasoning_effort", "low") // mais rápido
         }
 
-        val conn = (URL(URL_CHAT).openConnection() as HttpURLConnection).apply {
+        val conn = (URL(provider.url).openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
             connectTimeout = 8000
             readTimeout = 20000
             doOutput = true
             setRequestProperty("Content-Type", "application/json")
             setRequestProperty("Authorization", "Bearer " + prefs.aiKey.trim())
+            if (provider.name == "OpenRouter") setRequestProperty("X-Title", "Zuri")
         }
         conn.outputStream.use { it.write(body.toString().toByteArray()) }
         val code = conn.responseCode
         val text = (if (code in 200..299) conn.inputStream else conn.errorStream)
             ?.bufferedReader()?.use { it.readText() } ?: ""
         conn.disconnect()
-        if (code == 401) throw IllegalStateException("chave da IA inválida")
-        if (code == 429) throw IllegalStateException("limite grátis da IA atingido, tente daqui a pouco")
-        if (code !in 200..299) throw IllegalStateException("erro $code da IA")
+        if (code == 401) throw IllegalStateException("chave inválida (${provider.name})")
+        if (code == 429) throw IllegalStateException("limite grátis do ${provider.name} atingido, tente daqui a pouco")
+        if (code !in 200..299) {
+            val detail = try {
+                JSONObject(text).optJSONObject("error")?.optString("message")
+            } catch (_: Exception) { null }
+            if (code == 403 && detail?.contains("network", true) == true)
+                throw IllegalStateException("o ${provider.name} bloqueou a internet desta casa (VPN ou rede). Tente outra IA")
+            throw IllegalStateException("erro $code do ${provider.name}" + (detail?.let { ": ${it.take(120)}" } ?: ""))
+        }
 
         val msg = JSONObject(text).getJSONArray("choices").getJSONObject(0).getJSONObject("message")
         val content = msg.optString("content", "").takeIf { it.isNotBlank() && it != "null" }?.let(::clean)

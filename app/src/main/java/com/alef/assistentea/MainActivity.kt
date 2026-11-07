@@ -159,18 +159,31 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         findViewById<TextView>(R.id.aiHelp).setOnClickListener {
             openSettings(Intent(Intent.ACTION_VIEW, Uri.parse("https://console.groq.com/keys")))
         }
+        val aiStatus = findViewById<TextView>(R.id.aiStatus)
+        fun status(text: String, error: Boolean) {
+            aiStatus.setTextColor(getColor(if (error) R.color.error else R.color.cyan))
+            aiStatus.text = text
+        }
+        if (prefs.aiKey.isNotBlank()) {
+            status("Chave salva (${com.alef.assistentea.core.AiBrain.providerFor(prefs.aiKey).name}).", false)
+        }
         findViewById<TextView>(R.id.aiSaveButton).setOnClickListener {
-            prefs.aiKey = aiKeyInput.text.toString()
+            // fecha o teclado
+            (getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager)
+                .hideSoftInputFromWindow(aiKeyInput.windowToken, 0)
+            prefs.aiKey = aiKeyInput.text.toString().replace(Regex("\\s"), "")
+            aiKeyInput.setText(prefs.aiKey)
             if (prefs.aiKey.isBlank()) {
-                onReply("Chave apagada. A Zuri volta a usar só os comandos fixos.", false)
+                status("Chave apagada. A Zuri volta a usar só os comandos fixos.", false)
                 return@setOnClickListener
             }
-            onReply("Testando a IA…", false)
+            val provider = com.alef.assistentea.core.AiBrain.providerFor(prefs.aiKey).name
+            status("Chave salva. Testando o $provider…", false)
             com.alef.assistentea.core.AiBrain(prefs).ask(
                 "Diga oi e se apresente em uma frase curta.", "teste da configuração"
             ) { answer, error ->
-                if (answer?.text != null) onReply("IA funcionando! Ela disse: ${answer.text}", false)
-                else onReply("A IA não respondeu" + (error?.let { ": $it" } ?: "") + ". Confira a chave.", true)
+                if (answer?.text != null) status("IA funcionando ($provider)! Ela disse: ${answer.text}", false)
+                else status("A IA não respondeu" + (error?.let { ": $it" } ?: "") + ".", true)
             }
         }
 
@@ -488,6 +501,10 @@ class MainActivity : Activity(), AssistantEngine.Ui {
     override fun onReply(text: String, error: Boolean) {
         replyText.setTextColor(getColor(if (error) R.color.error else R.color.cyan))
         replyText.text = text
+        // Com as configurações abertas, a resposta ficaria escondida atrás do painel
+        if (::settingsPanel.isInitialized && settingsPanel.visibility == View.VISIBLE && text.isNotBlank()) {
+            android.widget.Toast.makeText(this, text, android.widget.Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onVoiceLevel(level: Float) {

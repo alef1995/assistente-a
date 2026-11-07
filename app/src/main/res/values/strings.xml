@@ -34,7 +34,7 @@
     <string name="screen_saver">Economia de energia: apagar a tela quando parada</string>
     <string name="screen_saver_hint">A tela apaga sozinha (no tempo de tela do Android) e acende quando você chama \"Zuri\". O microfone continua ouvindo.</string>
     <string name="ai_title">Cérebro de IA (grátis)</string>
-    <string name="ai_help">Com a IA, a Zuri conversa e entende qualquer frase. Pegue uma chave grátis em console.groq.com/keys (toque aqui) e cole abaixo.</string>
-    <string name="ai_key_hint">Cole aqui a chave (começa com gsk_)</string>
+    <string name="ai_help">Com a IA, a Zuri conversa e entende qualquer frase. Cole uma chave grátis de um destes (toque aqui para abrir o Groq): console.groq.com/keys (gsk_…) · openrouter.ai/keys (sk-or-…) · aistudio.google.com/apikey (AIza…). A Zuri reconhece qual é pela chave.</string>
+    <string name="ai_key_hint">Cole aqui a chave (gsk_…, sk-or-… ou AIza…)</string>
     <string name="ai_save">Salvar chave e testar</string>
 </resources>
