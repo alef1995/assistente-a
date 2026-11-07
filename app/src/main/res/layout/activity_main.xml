@@ -309,6 +309,48 @@
                     android:src="@drawable/ic_close" />
             </LinearLayout>
 
+            <!-- Cérebro de IA -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/ai_title"
+                android:textColor="@color/text"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/aiHelp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/ai_help"
+                android:textColor="@color/cyan"
+                android:textSize="13sp" />
+
+            <EditText
+                android:id="@+id/aiKeyInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/ai_key_hint"
+                android:importantForAutofill="no"
+                android:inputType="textPassword"
+                android:singleLine="true"
+                android:textColor="@color/text"
+                android:textColorHint="@color/text_dim"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/aiSaveButton"
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/chip_bg"
+                android:gravity="center"
+                android:text="@string/ai_save"
+                android:textColor="@color/text"
+                android:textSize="14sp" />
+
             <Switch
                 android:id="@+id/tabletSwitch"
                 android:layout_width="match_parent"

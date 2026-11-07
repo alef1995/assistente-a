@@ -75,6 +75,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
     private val music = MusicLauncher(context)
     private val device = DeviceActions(context)
     private val phoneMic = PhoneMic(context)
+    private val ai = AiBrain(prefs)
     private val wake = WakeWordDetector(context) { text, final -> onWakeText(text, final) }
 
     /** Formas do nome que o reconhecedor offline está ouvindo (para conferir nas configurações). */
@@ -303,7 +304,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         var best = CommandParser.parseBest(alternatives, preferWake = waitingWake)
         ui?.onHeard("“${alternatives.first()}”")
         // Depois do "Oi", um nome solto ("Alcione", "Raça Negra") é pedido de música
-        if (greeted && best.command is Command.Unknown) {
+        if (greeted && best.command is Command.Unknown && !ai.isConfigured) {
             val name = alternatives.first().trim().trimEnd('.', '!', '?')
             if (name.isNotEmpty()) best = best.copy(command = Command.Play(name))
         }
@@ -448,7 +449,9 @@ class AssistantEngine(private val context: Context, private val host: Host) :
 
             Command.WakeOnly -> greetAndListen()
 
-            is Command.Unknown -> reply("Não entendi. Diga \"ajuda\" para ouvir os comandos.")
+            is Command.Unknown ->
+                if (ai.isConfigured && cmd.text.isNotBlank()) askAi(cmd.text)
+                else reply("Não entendi. Diga \"ajuda\" para ouvir os comandos.")
         }
         ui?.onRefresh()
         main.postDelayed({ ui?.onRefresh() }, 700)
@@ -458,6 +461,44 @@ class AssistantEngine(private val context: Context, private val host: Host) :
     private fun pauseEverything(stop: Boolean = false) {
         embedded?.let { if (stop) { if (it.isActive) it.stop() } else if (it.isPlaying) it.pause() }
         media.pause()
+    }
+
+    // ================================================================== IA
+
+    /** Frase livre: a IA responde ou escolhe a ação. */
+    private fun askAi(text: String) {
+        setState(State.PROCESSING)
+        showReply("Pensando…")
+        ai.ask(text, situation()) { answer, error ->
+            when {
+                answer == null ->
+                    reply("Não consegui falar com a IA agora" + (error?.let { ": $it" } ?: "") + ".", error = true)
+                answer.command != null -> {
+                    setState(State.PROCESSING)
+                    execute(answer.command)
+                }
+                !answer.text.isNullOrBlank() -> {
+                    val t = answer.text
+                    // Terminou com pergunta? Já fica ouvindo a resposta, sem precisar chamar "Zuri" de novo
+                    reply(t) { if (t.trimEnd().endsWith("?")) startListening(manual = true) }
+                }
+                else -> reply("Não entendi. Pode repetir?") { startListening(manual = true) }
+            }
+        }
+    }
+
+    /** O que está acontecendo agora, para a IA saber o contexto. */
+    private fun situation(): String {
+        val parts = mutableListOf<String>()
+        val e = embedded
+        val t = media.nowPlaying()
+        when {
+            e != null && e.isActive -> parts += "tocando no YouTube: ${e.title ?: "música"}" + if (e.isPlaying) "" else " (pausado)"
+            t != null -> parts += "tocando: ${t.title}" + (t.artist?.let { " - $it" } ?: "") + if (t.playing) "" else " (pausado)"
+            else -> parts += "nenhuma música tocando"
+        }
+        parts += "volume ${volume.level()} de 10"
+        return parts.joinToString("; ")
     }
 
     /** Porcentagem → escala de 1 a 10 (nunca diz "volume 0" se ainda tem som). */

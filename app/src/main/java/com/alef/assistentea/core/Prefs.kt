@@ -27,6 +27,16 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("screen_saver", true)
         set(v) = sp.edit().putBoolean("screen_saver", v).apply()
 
+    /** Chave da IA (Groq, plano gratuito). Vazia = sem IA, só os comandos fixos. */
+    var aiKey: String
+        get() = sp.getString("ai_key", "") ?: ""
+        set(v) = sp.edit().putString("ai_key", v.trim()).apply()
+
+    /** Modelo de IA aberto usado no Groq. Vazio = padrão (gpt-oss-120b). */
+    var aiModel: String
+        get() = sp.getString("ai_model", "") ?: ""
+        set(v) = sp.edit().putString("ai_model", v.trim()).apply()
+
     /** Tocar um bipe quando a Zuri for chamada (como a Zuri). */
     var wakeBeep: Boolean
         get() = sp.getBoolean("wake_beep", true)

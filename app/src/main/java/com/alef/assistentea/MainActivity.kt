@@ -153,6 +153,27 @@ class MainActivity : Activity(), AssistantEngine.Ui {
             setOnCheckedChangeListener { _, checked -> prefs.screenSaver = checked; applyTabletMode() }
         }
 
+        // Cérebro de IA
+        val aiKeyInput = findViewById<android.widget.EditText>(R.id.aiKeyInput)
+        aiKeyInput.setText(prefs.aiKey)
+        findViewById<TextView>(R.id.aiHelp).setOnClickListener {
+            openSettings(Intent(Intent.ACTION_VIEW, Uri.parse("https://console.groq.com/keys")))
+        }
+        findViewById<TextView>(R.id.aiSaveButton).setOnClickListener {
+            prefs.aiKey = aiKeyInput.text.toString()
+            if (prefs.aiKey.isBlank()) {
+                onReply("Chave apagada. A Zuri volta a usar só os comandos fixos.", false)
+                return@setOnClickListener
+            }
+            onReply("Testando a IA…", false)
+            com.alef.assistentea.core.AiBrain(prefs).ask(
+                "Diga oi e se apresente em uma frase curta.", "teste da configuração"
+            ) { answer, error ->
+                if (answer?.text != null) onReply("IA funcionando! Ela disse: ${answer.text}", false)
+                else onReply("A IA não respondeu" + (error?.let { ": $it" } ?: "") + ". Confira a chave.", true)
+            }
+        }
+
         tabletSwitch.isChecked = prefs.tabletMode
         tabletSwitch.setOnCheckedChangeListener { _, checked ->
             prefs.tabletMode = checked
