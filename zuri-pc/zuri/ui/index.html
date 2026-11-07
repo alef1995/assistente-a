@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Zuri</title>
+<style>
+  :root { --text:#EAF4FF; --dim:#8FA6CC; --cyan:#00C6FF; --blue:#0A84FF; --card:rgba(12,26,54,.7); --stroke:rgba(0,198,255,.2); --err:#FF6B81; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; overflow:hidden; font-family:"Segoe UI", system-ui, sans-serif; color:var(--text);
+    background: radial-gradient(60% 60% at 50% 45%, rgba(10,132,255,.2), transparent 70%), linear-gradient(#06112A, #02050E); user-select:none; }
+  #waves { position:absolute; left:0; right:0; top:90px; bottom:200px; width:100%; height:calc(100% - 290px); cursor:pointer; }
+  header { position:absolute; top:0; left:0; right:0; display:flex; align-items:flex-start; padding:24px 24px 0 36px; }
+  .clockrow { display:flex; align-items:baseline; gap:24px; }
+  #clock { font-size:64px; font-weight:200; letter-spacing:1px; }
+  #weather { font-size:30px; font-weight:300; color:var(--cyan); }
+  #date { color:var(--dim); font-size:17px; margin-top:2px; }
+  .spacer { flex:1; }
+  .round { width:48px; height:48px; border-radius:50%; border:1px solid var(--stroke); background:var(--card); color:var(--text);
+    display:grid; place-items:center; cursor:pointer; font-size:20px; }
+  .round:hover { border-color:var(--cyan); }
+  .primary { background:linear-gradient(315deg, var(--blue), #1E5BFF); border:none; }
+  #status { position:absolute; left:0; right:0; bottom:128px; text-align:center; padding:0 40px; }
+  #statusText { font-size:26px; font-weight:300; }
+  #heard { color:var(--dim); font-size:17px; margin-top:6px; min-height:22px; }
+  #reply { color:var(--cyan); font-size:18px; margin-top:4px; min-height:24px; }
+  #reply.err { color:var(--err); }
+  #bar { position:absolute; left:20px; right:20px; bottom:20px; display:flex; align-items:center; gap:10px; padding:14px 16px;
+    background:var(--card); border:1px solid var(--stroke); border-radius:20px; }
+  #track { flex:1; min-width:0; }
+  #trackTitle { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:16px; }
+  #trackSub { color:var(--dim); font-size:13px; }
+  #vol { color:var(--dim); font-size:13px; min-width:46px; text-align:center; }
+  #video { position:absolute; top:84px; right:20px; width:320px; height:180px; border-radius:20px; overflow:hidden;
+    border:1px solid var(--stroke); background:#000; opacity:0; pointer-events:none; transition:opacity .3s; }
+  #video.on { opacity:1; pointer-events:auto; }
+  #settings { position:absolute; inset:0; background:rgba(5,9,26,.96); display:none; overflow:auto; }
+  #settings.on { display:block; }
+  .panel { max-width:640px; margin:0 auto; padding:28px; }
+  .panel h1 { font-weight:300; font-size:28px; display:flex; align-items:center; justify-content:space-between; }
+  label { display:block; margin-top:18px; font-size:16px; }
+  .hint { color:var(--dim); font-size:13px; margin-top:2px; }
+  input[type=text], input[type=password] { width:100%; margin-top:6px; padding:12px; border-radius:12px; border:1px solid var(--stroke);
+    background:rgba(255,255,255,.04); color:var(--text); font-size:15px; }
+  .chip { margin-top:14px; height:46px; border-radius:18px; border:1px solid var(--blue); display:grid; place-items:center; cursor:pointer; }
+  .chip:hover { background:rgba(10,132,255,.15); }
+  #aiStatus { color:var(--cyan); margin-top:8px; font-size:14px; min-height:18px; }
+  #aiStatus.err { color:var(--err); }
+  a { color:var(--cyan); }
+</style>
+</head>
+<body>
+<canvas id="waves" title="Toque para falar com a Zuri"></canvas>
+
+<header>
+  <div>
+    <div class="clockrow"><div id="clock">--:--</div><div id="weather"></div></div>
+    <div id="date"></div>
+  </div>
+  <div class="spacer"></div>
+  <div class="round" id="gear" title="Configurações">⚙</div>
+</header>
+
+<div id="video"><div id="player"></div></div>
+
+<div id="status">
+  <div id="statusText">Iniciando…</div>
+  <div id="heard"></div>
+  <div id="reply"></div>
+</div>
+
+<div id="bar">
+  <div style="font-size:22px;color:var(--cyan);width:32px;text-align:center">♪</div>
+  <div id="track"><div id="trackTitle">Nada tocando no momento</div><div id="trackSub"></div></div>
+  <div class="round" id="volDown" title="Diminuir volume">−</div>
+  <div id="vol"></div>
+  <div class="round" id="volUp" title="Aumentar volume">+</div>
+  <div class="round" id="prev" title="Anterior">⏮</div>
+  <div class="round primary" id="playPause" title="Tocar/pausar">⏯</div>
+  <div class="round" id="next" title="Próxima">⏭</div>
+  <div class="round primary" id="mic" title="Falar com a Zuri">🎤</div>
+</div>
+
+<div id="settings">
+  <div class="panel">
+    <h1>Configurações <span class="round" id="close">✕</span></h1>
+
+    <label>Cérebro de IA (grátis)</label>
+    <div class="hint">Cole uma chave grátis: <a href="#" data-url="https://console.groq.com/keys">console.groq.com/keys</a> (gsk_…) ·
+      <a href="#" data-url="https://openrouter.ai/keys">openrouter.ai/keys</a> (sk-or-…) ·
+      <a href="#" data-url="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a> (AIza…). Pode ser a mesma do tablet.</div>
+    <input type="password" id="aiKey" placeholder="Cole aqui a chave">
+
+    <label>Sua cidade</label>
+    <input type="text" id="city" placeholder="Para a previsão do tempo (ex.: São Paulo)">
+
+    <label>Música do “bom dia” (opcional)</label>
+    <input type="text" id="morning" placeholder="ex.: MPB tranquila">
+
+    <label><input type="checkbox" id="startup"> Abrir a Zuri junto com o Windows</label>
+
+    <div class="chip" id="save">Salvar e testar a IA</div>
+    <div id="aiStatus"></div>
+
+    <div class="hint" id="forms" style="margin-top:22px"></div>
+    <div class="hint" style="margin-top:14px;line-height:1.6">
+      Diga “Zuri”, espere o “Oi” e peça. Exemplos: “tocar Alcione” · “próxima” · “pausar” · “volume 5” ·
+      “como está o tempo?” · “notícias do Cruzeiro” · “me lembra de ligar pro João às 18h” · “coloca leite na lista” ·
+      “bom dia”. De uma vez: “Zuri, volume três”, “Zuri, pausa”. Tela cheia: F11.</div>
+  </div>
+</div>
+
+<script>
+// ============================================================ ondas (mesma matemática do tablet)
+const cv = document.getElementById('waves'), ctx = cv.getContext('2d');
+const layers = [['#1E5BFF',1.6,0.7,0.0,1.00,2.0],['#0A84FF',2.2,1.0,1.3,0.85,2.5],['#00C6FF',2.9,1.4,2.6,0.70,2.0],
+                ['#5AC8FA',3.6,1.9,4.1,0.55,1.5],['#9BE7FF',4.4,2.4,5.2,0.40,1.2]];
+let mode = 'idle', level = 0, amp = .1, speed = .55, phase = 0, last = 0;
+function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`; }
+function frame(t) {
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  if (cv.width !== w*dpr || cv.height !== h*dpr) { cv.width = w*dpr; cv.height = h*dpr; }
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+  const dt = last ? Math.min(.05, (t-last)/1000) : .016; last = t; const s = t/1000;
+  let ta, ts;
+  if (mode === 'idle') { ta = .10 + .035*Math.sin(s*.9); ts = .55; }
+  else if (mode === 'listening') { ta = .16 + level*.84; ts = 1.5; }
+  else if (mode === 'thinking') { ta = .28 + .12*Math.sin(s*6); ts = 2.6; }
+  else { ta = .30 + .45*Math.abs(Math.sin(s*5.3)*Math.sin(s*2.1+1)); ts = 1.9; }
+  amp += (ta-amp)*Math.min(1, dt*9); speed += (ts-speed)*Math.min(1, dt*4); phase += dt*speed*2.4;
+  const cy = h/2, maxH = h*.42;
+  const R = Math.min(w,h)*.55*(.75+amp*.7);
+  const g = ctx.createRadialGradient(w/2,cy,0,w/2,cy,R);
+  g.addColorStop(0,'rgba(0,168,255,.33)'); g.addColorStop(.45,'rgba(0,198,255,.13)'); g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(w/2,cy,R,0,Math.PI*2); ctx.fill();
+  const lg = ctx.createLinearGradient(0,0,w,0); lg.addColorStop(0,'rgba(0,198,255,0)'); lg.addColorStop(.5,'rgba(0,198,255,.4)'); lg.addColorStop(1,'rgba(0,198,255,0)');
+  ctx.strokeStyle = lg; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(w,cy); ctx.stroke();
+  const N = 120;
+  for (const [col,fq,sp,off,ht,st] of layers) {
+    const a = amp*ht*maxH, p = phase*sp+off, ys = [];
+    for (let i=0;i<=N;i++){ const nx=i/N*2-1, env=(1-nx*nx)**2; ys.push(env*a*Math.sin(nx*fq*Math.PI+p)); }
+    const fg = ctx.createLinearGradient(0,cy-maxH,0,cy+maxH);
+    fg.addColorStop(0,rgba(col,0)); fg.addColorStop(.5,rgba(col,.47)); fg.addColorStop(1,rgba(col,0));
+    ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(0,cy);
+    for (let i=0;i<=N;i++) ctx.lineTo(i*w/N, cy-Math.abs(ys[i]));
+    for (let i=N;i>=0;i--) ctx.lineTo(i*w/N, cy+Math.abs(ys[i]));
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = rgba(col,.82); ctx.lineWidth = st*1.4; ctx.lineJoin='round'; ctx.beginPath(); ctx.moveTo(0,cy+ys[0]);
+    for (let i=1;i<=N;i++) ctx.lineTo(i*w/N, cy+ys[i]);
+    ctx.stroke();
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// ============================================================ chamadas do Python
+const $ = id => document.getElementById(id);
+window.ui = {
+  state(s, text) {
+    mode = s; if (s !== 'listening') level = 0;
+    const labels = { listening:'Ouvindo…', thinking:'Entendendo…', speaking:'' };
+    $('statusText').textContent = text || labels[s] || 'Diga “Zuri”';
+  },
+  heard(t) { $('heard').textContent = t; },
+  reply(t, err) { const r = $('reply'); r.textContent = t; r.classList.toggle('err', !!err); },
+  level(v) { level = v; },
+  wake() {},
+};
+
+// ============================================================ relógio e temperatura
+const DIAS = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+function tick() {
+  const d = new Date();
+  $('clock').textContent = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  $('date').textContent = `${DIAS[d.getDay()]}, ${d.getDate()} de ${MESES[d.getMonth()]}`;
+}
+tick(); setInterval(tick, 5000);
+async function refreshWeather() {
+  try { const w = await pywebview.api.weather_now(); $('weather').textContent = w || ''; } catch (e) {}
+}
+
+// ============================================================ player do YouTube (dentro da janela)
+let player = null, ytReady = false, pending = null, titles = [];
+const tag = document.createElement('script'); tag.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(tag);
+window.onYouTubeIframeAPIReady = function () {
+  player = new YT.Player('player', { width:'100%', height:'100%',
+    playerVars:{ autoplay:1, playsinline:1, controls:0, rel:0, iv_load_policy:3, origin: location.origin },
+    events:{ onReady(){ ytReady = true; if (pending) { yt.playIds(...pending); pending = null; } },
+             onStateChange(e){ report(e.data); },
+             onError(){ setTimeout(()=>{ try { player.nextVideo(); } catch(e){} }, 300); } } });
+};
+function report(state) {
+  let t = ''; try { t = (player.getVideoData()||{}).title || ''; } catch(e) {}
+  let i = 0; try { i = player.getPlaylistIndex(); } catch(e) {}
+  const title = t || titles[i] || '';
+  const active = $('video').classList.contains('on') && !(state === 0 && i >= titles.length - 1);
+  $('trackTitle').textContent = active && title ? title : 'Nada tocando no momento';
+  $('trackSub').textContent = active ? 'YouTube · na tela da Zuri' : '';
+  try { pywebview.api.player_state(active, state === 1, title); } catch(e) {}
+}
+window.yt = {
+  playIds(ids, ts) {
+    if (!ytReady) { pending = [ids, ts]; return; }
+    titles = ts || []; $('video').classList.add('on');
+    player.loadPlaylist(ids, 0, 0); try { player.unMute(); player.setVolume(100); } catch(e) {}
+  },
+  pause(){ player && player.pauseVideo(); }, resume(){ player && player.playVideo(); },
+  next(){ player && player.nextVideo(); }, previous(){ player && player.previousVideo(); },
+  stop(){ if (player) player.stopVideo(); $('video').classList.remove('on'); report(0); titles = []; },
+};
+
+// ============================================================ botões
+function api() { return window.pywebview && pywebview.api; }
+$('waves').onclick = $('mic').onclick = () => api() && api().tap();
+$('volUp').onclick = async () => { $('vol').textContent = 'vol ' + await api().volume(1); };
+$('volDown').onclick = async () => { $('vol').textContent = 'vol ' + await api().volume(-1); };
+$('prev').onclick = () => api().media('previous');
+$('next').onclick = () => api().media('next');
+$('playPause').onclick = () => {
+  if (player && $('video').classList.contains('on')) { player.getPlayerState() === 1 ? player.pauseVideo() : player.playVideo(); }
+  else api().media('resume');
+};
+document.querySelectorAll('a[data-url]').forEach(a => a.onclick = e => { e.preventDefault(); api().open_url(a.dataset.url); });
+$('gear').onclick = async () => {
+  const s = await api().get_settings();
+  $('aiKey').value = s.ai_key || ''; $('city').value = s.city || ''; $('morning').value = s.morning_music || '';
+  $('startup').checked = !!s.start_with_windows;
+  $('forms').textContent = s.wake_forms && s.wake_forms.length ? 'O nome é reconhecido como: ' + s.wake_forms.join(', ')
+                                                                : 'Reconhecedor offline carregando…';
+  $('settings').classList.add('on');
+};
+$('close').onclick = () => $('settings').classList.remove('on');
+$('save').onclick = async () => {
+  await api().save_settings({ ai_key:$('aiKey').value.replace(/\s/g,''), city:$('city').value,
+                              morning_music:$('morning').value, start_with_windows:$('startup').checked });
+  refreshWeather();
+  const st = $('aiStatus');
+  if (!$('aiKey').value.trim()) { st.textContent = 'Sem chave: a Zuri usa só os comandos fixos.'; st.classList.remove('err'); return; }
+  st.textContent = 'Salvo. Testando a IA…'; st.classList.remove('err');
+  const r = await api().test_ai(); st.textContent = r.text; st.classList.toggle('err', !r.ok);
+};
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') $('settings').classList.remove('on');
+  if (e.key === 'F11') { e.preventDefault(); api().fullscreen(); }
+});
+
+window.addEventListener('pywebviewready', async () => {
+  refreshWeather(); setInterval(refreshWeather, 15*60*1000);
+  try { $('vol').textContent = 'vol ' + (await api().get_settings()).volume; } catch(e) {}
+});
+</script>
+</body>
+</html>

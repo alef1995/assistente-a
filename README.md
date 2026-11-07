@@ -55,6 +55,12 @@ Assistente pessoal em português do Brasil que controla músicas e volume por vo
 
 A A entende melhor do que antes: corrige erros comuns do reconhecimento de voz ("Atocar", "Aproxima", "posar", "almentar o valume") e dá dicas ao reconhecedor sobre as palavras de comando (Android 13+).
 
+## Zuri para Windows (PC)
+
+A pasta `zuri-pc/` tem a Zuri como programa para Windows: mesma tela (ondas, relógio, temperatura), mesmo
+"Zuri" → "Oi" → pedido, mesma IA grátis, clima, notícias, lembretes, lista de compras, bom dia e música do YouTube
+dentro da janela. Instalador: [ZuriSetup.exe](https://github.com/alef1995/assistente-a/releases/download/pc-latest/ZuriSetup.exe).
+
 ## Instalar no celular
 
 1. No celular, abra o link **Baixar o app** acima.

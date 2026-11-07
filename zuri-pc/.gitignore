@@ -1,0 +1,8 @@
+model/
+modelo_tmp/
+modelo.zip
+build/
+dist/
+Output/
+__pycache__/
+*.spec
