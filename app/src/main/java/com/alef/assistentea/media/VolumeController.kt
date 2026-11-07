@@ -20,6 +20,9 @@ class VolumeController(context: Context) {
 
     fun percent(): Int = if (maxIndex == 0) 0 else (am.getStreamVolume(stream) * 100.0 / maxIndex).roundToInt()
 
+    /** Volume na escala de 0 a 10 (como a Zuri fala: "volume 5"). */
+    fun level(): Int = (percent() / 10.0).roundToInt().coerceIn(0, 10)
+
     fun isMuted(): Boolean = am.isStreamMute(stream)
 
     fun up(): Int {

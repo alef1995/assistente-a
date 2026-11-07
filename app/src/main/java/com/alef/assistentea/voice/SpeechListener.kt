@@ -27,7 +27,7 @@ class SpeechListener(private val context: Context, private val callback: Callbac
 
     companion object {
         private val BIASING = arrayListOf(
-            "Zuri", "stop", "tocar", "pausar", "pausar música", "continuar", "próxima", "anterior", "parar", "volume",
+            "Zuri", "stop", "volume 1", "volume 5", "volume 10", "tocar", "pausar", "pausar música", "continuar", "próxima", "anterior", "parar", "volume",
             "aumentar volume", "diminuir volume", "silenciar", "lanterna", "timer", "despertador",
             "que horas são", "bateria", "abrir", "músicas do", "que música é essa"
         )

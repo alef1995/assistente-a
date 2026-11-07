@@ -518,7 +518,7 @@ class MainActivity : Activity(), AssistantEngine.Ui {
     }
 
     private fun refreshVolume() {
-        volumeText.text = if (volume.isMuted()) "mudo" else "${volume.percent()}%"
+        volumeText.text = if (volume.isMuted()) "mudo" else "vol ${volume.level()}"
     }
 
     private fun updatePlayerChip() {

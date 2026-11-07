@@ -50,7 +50,7 @@ class CommandParserTest {
         assertEquals(Command.VolumeUp, cmd("almentar o valume"))
         assertEquals(Command.Previous, cmd("musica anteriro"))
         assertEquals(Command.Play("Evidências"), cmd("torcar Evidências"))
-        assertEquals(Command.SetVolume(40), cmd("volume 40"))
+        assertEquals(Command.SetVolume(40), cmd("volume 4"))
     }
 
     @Test fun nomeZuri() {
@@ -91,6 +91,20 @@ class CommandParserTest {
         assertEquals(Command.Stop, cmd("istópi"))
         assertEquals(Command.Stop, cmd("Zuri, stop"))
         assertEquals(Command.Stop, cmd("para a música"))
+    }
+
+    @Test fun volumeDe1a10() {
+        assertEquals(Command.SetVolume(10), cmd("Zuri volume 1"))
+        assertEquals(Command.SetVolume(10), cmd("volume um"))
+        assertEquals(Command.SetVolume(50), cmd("volume 5"))
+        assertEquals(Command.SetVolume(50), cmd("volume cinco"))
+        assertEquals(Command.SetVolume(70), cmd("coloca o volume no 7"))
+        assertEquals(Command.SetVolume(100), cmd("volume 10"))
+        assertEquals(Command.SetVolume(100), cmd("volume dez"))
+        assertEquals(Command.SetVolume(30), cmd("nível 3"))
+        // porcentagem continua valendo
+        assertEquals(Command.SetVolume(50), cmd("volume 50%"))
+        assertEquals(Command.SetVolume(35), cmd("volume 35"))
     }
 
     @Test fun volume() {

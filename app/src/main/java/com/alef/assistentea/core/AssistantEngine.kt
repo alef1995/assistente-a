@@ -371,11 +371,11 @@ class AssistantEngine(private val context: Context, private val host: Host) :
             Command.Next -> reply("Próxima.") { if (usingEmbedded) embedded?.next() else media.next() }
             Command.Previous -> reply("Música anterior.") { if (usingEmbedded) embedded?.previous() else media.previous() }
 
-            Command.VolumeUp -> reply("Volume em ${volume.up()} por cento.")
-            Command.VolumeDown -> reply("Volume em ${volume.down()} por cento.")
-            is Command.SetVolume -> reply("Volume em ${volume.setPercent(cmd.percent)} por cento.")
+            Command.VolumeUp -> reply("Volume ${levelOf(volume.up())}.")
+            Command.VolumeDown -> reply("Volume ${levelOf(volume.down())}.")
+            is Command.SetVolume -> reply("Volume ${levelOf(volume.setPercent(cmd.percent))}.")
             Command.VolumeQuery -> reply(
-                if (volume.isMuted()) "O som está no mudo." else "O volume está em ${volume.percent()} por cento."
+                if (volume.isMuted()) "O som está no mudo." else "O volume está no ${volume.level()}."
             )
             Command.Mute -> reply("Silenciando.") { volume.mute() }
             Command.Unmute -> { volume.unmute(); reply("Som ativado.") }
@@ -455,6 +455,10 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         embedded?.let { if (stop) { if (it.isActive) it.stop() } else if (it.isPlaying) it.pause() }
         media.pause()
     }
+
+    /** Porcentagem → escala de 1 a 10 (nunca diz "volume 0" se ainda tem som). */
+    private fun levelOf(percent: Int): Int =
+        if (percent <= 0) 0 else Math.round(percent / 10.0).toInt().coerceIn(1, 10)
 
     private fun greeting(): String {
         val h = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)

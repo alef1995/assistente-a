@@ -197,8 +197,13 @@ object CommandParser {
                 "como ta o volume", "volume atual")) {
             return Command.VolumeQuery
         }
-        if (has(text, "volume", "som")) {
-            parseVolumeNumber(tokens)?.let { return Command.SetVolume(it.coerceIn(0, 100)) }
+        if (has(text, "volume", "som", "nivel")) {
+            // Escala de 1 a 10 ("volume 1" = mais baixo, "volume 10" = máximo).
+            // Com "%" (ou número acima de 10), vale como porcentagem: "volume 50%".
+            parseVolumeNumber(tokens)?.let { n ->
+                val percent = if (!tokens.contains("%") && n in 0..10) n * 10 else n
+                return Command.SetVolume(percent.coerceIn(0, 100))
+            }
             if (has(text, "maximo", "no talo", "tudo", "no maximo")) return Command.SetVolume(100)
             if (has(text, "minimo")) return Command.SetVolume(10)
             if (has(text, "metade", "meio")) return Command.SetVolume(50)
