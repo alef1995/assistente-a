@@ -64,7 +64,7 @@ class MainActivity : Activity(), AssistantEngine.Ui {
     private lateinit var youtube: EmbeddedYouTube
     private lateinit var updater: Updater
     private var release: Updater.Release? = null
-    private var checkedUpdate = false
+    private var lastUpdateCheck = 0L
     private lateinit var statusText: TextView
     private lateinit var heardText: TextView
     private lateinit var replyText: TextView
@@ -386,10 +386,21 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         }
         media.observe { showTrack(it) }
         updatePlayerChip()
-        // Procura versão nova uma vez por abertura
-        if (!checkedUpdate) {
-            checkedUpdate = true
-            updater.check { r -> release = r; showUpdateButton() }
+        // Procura versão nova ao voltar para a tela (no máximo a cada 10 min) e a cada 30 min
+        main.removeCallbacks(updateCheck)
+        if (System.currentTimeMillis() - lastUpdateCheck > 10 * 60 * 1000L) main.post(updateCheck)
+        else main.postDelayed(updateCheck, 30 * 60 * 1000L)
+    }
+
+    /** No tablet a tela fica sempre aberta: procura atualização de tempos em tempos. */
+    private val updateCheck = object : Runnable {
+        override fun run() {
+            lastUpdateCheck = System.currentTimeMillis()
+            updater.check { r ->
+                if (r != null) release = r
+                showUpdateButton()
+            }
+            main.postDelayed(this, 30 * 60 * 1000L)
         }
     }
 
@@ -423,6 +434,7 @@ class MainActivity : Activity(), AssistantEngine.Ui {
     override fun onPause() {
         super.onPause()
         main.removeCallbacks(weatherRefresh)
+        main.removeCallbacks(updateCheck)
         media.stopObserving()
     }
 
