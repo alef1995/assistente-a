@@ -37,6 +37,11 @@ class Prefs(context: Context) {
         get() = sp.getString("ai_model", "") ?: ""
         set(v) = sp.edit().putString("ai_model", v.trim()).apply()
 
+    /** Cidade da casa (para a previsão do tempo). */
+    var city: String
+        get() = sp.getString("city", "") ?: ""
+        set(v) = sp.edit().putString("city", v.trim()).apply()
+
     /** Tocar um bipe quando a Zuri for chamada (como a Zuri). */
     var wakeBeep: Boolean
         get() = sp.getBoolean("wake_beep", true)

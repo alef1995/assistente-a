@@ -160,6 +160,8 @@ class MainActivity : Activity(), AssistantEngine.Ui {
             openSettings(Intent(Intent.ACTION_VIEW, Uri.parse("https://console.groq.com/keys")))
         }
         val aiStatus = findViewById<TextView>(R.id.aiStatus)
+        val cityInput = findViewById<android.widget.EditText>(R.id.cityInput)
+        cityInput.setText(prefs.city)
         fun status(text: String, error: Boolean) {
             aiStatus.setTextColor(getColor(if (error) R.color.error else R.color.cyan))
             aiStatus.text = text
@@ -172,6 +174,7 @@ class MainActivity : Activity(), AssistantEngine.Ui {
             (getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager)
                 .hideSoftInputFromWindow(aiKeyInput.windowToken, 0)
             prefs.aiKey = aiKeyInput.text.toString().replace(Regex("\\s"), "")
+            prefs.city = cityInput.text.toString()
             aiKeyInput.setText(prefs.aiKey)
             if (prefs.aiKey.isBlank()) {
                 status("Chave apagada. A Zuri volta a usar só os comandos fixos.", false)

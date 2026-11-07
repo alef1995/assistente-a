@@ -48,6 +48,7 @@ class AiBrain(private val prefs: Prefs) {
         }
         private const val MEMORY_MS = 5 * 60 * 1000L   // lembra da conversa por 5 minutos
         private const val MAX_HISTORY = 12
+        private val INFO_TOOLS = setOf("get_weather")
     }
 
     val isConfigured: Boolean get() = prefs.aiKey.isNotBlank()
@@ -89,14 +90,61 @@ class AiBrain(private val prefs: Prefs) {
     // ------------------------------------------------------------------ chamada à IA
 
     private fun call(messages: List<JSONObject>, context: String): Answer {
+        val convo = JSONArray().apply {
+            put(JSONObject().put("role", "system").put("content", systemPrompt(context)))
+            messages.forEach { put(it) }
+        }
+        // Até 3 rodadas: a IA pode pedir informações (ex.: clima) antes de responder
+        repeat(3) {
+            val msg = request(convo)
+            val calls = msg.optJSONArray("tool_calls")
+            val infoCalls = (0 until (calls?.length() ?: 0)).map { calls!!.getJSONObject(it) }
+                .filter { it.getJSONObject("function").getString("name") in INFO_TOOLS }
+            if (infoCalls.isEmpty()) return toAnswer(msg)
+            // Executa as consultas e devolve os resultados para a IA responder
+            convo.put(JSONObject().put("role", "assistant").put("content", msg.optString("content", ""))
+                .put("tool_calls", calls))
+            for (c in infoCalls) {
+                val f = c.getJSONObject("function")
+                val args = JSONObject(f.optString("arguments").ifBlank { "{}" })
+                convo.put(JSONObject().put("role", "tool").put("tool_call_id", c.optString("id"))
+                    .put("content", runInfoTool(f.getString("name"), args)))
+            }
+        }
+        return Answer("Desculpe, me enrolei para responder isso.", null)
+    }
+
+    /** Ferramentas de informação (a IA recebe o resultado e então responde). */
+    private fun runInfoTool(name: String, a: JSONObject): String = when (name) {
+        "get_weather" -> {
+            val city = a.optString("city").takeIf { it.isNotBlank() && it != "null" } ?: prefs.city
+            if (city.isBlank()) {
+                "Cidade desconhecida. Pergunte ao usuário qual é a cidade dele."
+            } else {
+                if (prefs.city.isBlank()) prefs.city = city // lembra para as próximas vezes
+                Weather.forecast(city, a.optInt("days", 3))
+            }
+        }
+        else -> "Ferramenta desconhecida."
+    }
+
+    private fun toAnswer(msg: JSONObject): Answer {
+        val content = msg.optString("content", "").takeIf { it.isNotBlank() && it != "null" }?.let(::clean)
+        val calls = msg.optJSONArray("tool_calls")
+        val command = if (calls != null && calls.length() > 0) {
+            val f = calls.getJSONObject(0).getJSONObject("function")
+            toCommand(f.getString("name"), JSONObject(f.optString("arguments").ifBlank { "{}" }))
+        } else null
+        return Answer(content, command)
+    }
+
+    /** Uma chamada à IA; devolve a mensagem de resposta. */
+    private fun request(convo: JSONArray): JSONObject {
         val provider = providerFor(prefs.aiKey.trim())
         val model = prefs.aiModel.ifBlank { provider.model }
         val body = JSONObject().apply {
             put("model", model)
-            put("messages", JSONArray().apply {
-                put(JSONObject().put("role", "system").put("content", systemPrompt(context)))
-                messages.forEach { put(it) }
-            })
+            put("messages", convo)
             put("tools", tools())
             put("tool_choice", "auto")
             put("temperature", 0.6)
@@ -129,14 +177,7 @@ class AiBrain(private val prefs: Prefs) {
             throw IllegalStateException("erro $code do ${provider.name}" + (detail?.let { ": ${it.take(120)}" } ?: ""))
         }
 
-        val msg = JSONObject(text).getJSONArray("choices").getJSONObject(0).getJSONObject("message")
-        val content = msg.optString("content", "").takeIf { it.isNotBlank() && it != "null" }?.let(::clean)
-        val calls = msg.optJSONArray("tool_calls")
-        val command = if (calls != null && calls.length() > 0) {
-            val f = calls.getJSONObject(0).getJSONObject("function")
-            toCommand(f.getString("name"), JSONObject(f.optString("arguments").ifBlank { "{}" }))
-        } else null
-        return Answer(content, command)
+        return JSONObject(text).getJSONArray("choices").getJSONObject(0).getJSONObject("message")
     }
 
     private fun systemPrompt(context: String): String {
@@ -149,8 +190,10 @@ Quando o pedido for uma ação (tocar música, pausar, volume, timer, despertado
 use a ferramenta certa em vez de responder com texto. Se a pessoa disser só um nome de artista ou
 música, toque. Para músicas por estilo ou clima ("algo animado", "pra relaxar"), escolha um termo de
 busca bom (ex.: "pagode anos 90", "músicas relaxantes MPB"). Volume vai de 1 (mais baixo) a 10 (máximo).
+Para clima, temperatura ou chuva, use a ferramenta get_weather e responda com os números (temperatura e chance de chuva).
 Se não souber algo atual (notícias, resultados), diga com franqueza que não tem acesso a isso agora.
 Agora: $now.
+Cidade da casa: ${prefs.city.ifBlank { "não informada" }}.
 Situação: $context
 """.trimIndent()
     }
@@ -177,6 +220,10 @@ Situação: $context
                 .put("query", prop("string", "O que buscar, ex.: 'Evidências', 'pagode anos 90'"))
                 .put("artist", prop("string", "Nome do artista, se o pedido for por artista")),
             listOf("query")))
+        put(tool("get_weather", "Consultar o clima e a previsão do tempo (temperatura, chuva) de uma cidade.",
+            JSONObject()
+                .put("city", prop("string", "Cidade; vazio = cidade da casa"))
+                .put("days", prop("integer", "Quantos dias de previsão (1 a 7)"))))
         put(tool("pause_music", "Pausar a música."))
         put(tool("resume_music", "Continuar a música pausada."))
         put(tool("stop_music", "Parar a música de vez."))

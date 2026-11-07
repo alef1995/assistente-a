@@ -340,6 +340,19 @@
                 android:textColorHint="@color/text_dim"
                 android:textSize="15sp" />
 
+            <EditText
+                android:id="@+id/cityInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:hint="@string/city_hint"
+                android:importantForAutofill="no"
+                android:inputType="textCapWords"
+                android:singleLine="true"
+                android:textColor="@color/text"
+                android:textColorHint="@color/text_dim"
+                android:textSize="15sp" />
+
             <TextView
                 android:id="@+id/aiStatus"
                 android:layout_width="match_parent"

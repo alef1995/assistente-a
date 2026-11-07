@@ -37,4 +37,5 @@
     <string name="ai_help">Com a IA, a Zuri conversa e entende qualquer frase. Cole uma chave grátis de um destes (toque aqui para abrir o Groq): console.groq.com/keys (gsk_…) · openrouter.ai/keys (sk-or-…) · aistudio.google.com/apikey (AIza…). A Zuri reconhece qual é pela chave.</string>
     <string name="ai_key_hint">Cole aqui a chave (gsk_…, sk-or-… ou AIza…)</string>
     <string name="ai_save">Salvar chave e testar</string>
+    <string name="city_hint">Sua cidade, para a previsão do tempo (ex.: São Paulo)</string>
 </resources>
