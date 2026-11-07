@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Alexa</string>
-    <string name="status_idle">Toque no microfone e fale</string>
+    <string name="status_idle">Toque nas ondas e fale</string>
     <string name="status_listening">Ouvindo…</string>
     <string name="status_processing">Entendendo…</string>
     <string name="status_speaking">Falando…</string>
     <string name="nothing_playing">Nada tocando no momento</string>
-    <string name="continuous_mode">Escuta contínua (diga \"Alexa, …\")</string>
+    <string name="continuous_mode">Sempre ouvindo (diga \"Alexa\")</string>
     <string name="grant_media_access">Permitir mostrar a música atual</string>
     <string name="examples">Diga \"Alexa\", espere o \"Oi\" e peça. Exemplos: \"tocar Matuê\" · \"músicas do Henrique e Juliano\" · \"próxima\" · \"pausar\" · \"volume 50%\" · \"que horas são?\" · \"timer de 5 minutos\" · \"despertador às 7\" · \"liga a lanterna\" · \"abrir WhatsApp\" · \"conta uma piada\" · \"pode parar de ouvir\"</string>
     <string name="continuous_hint">Funciona com a tela apagada. Uma notificação fixa mostra que a Alexa está ouvindo.</string>
@@ -23,4 +23,8 @@
     <string name="cd_next">Próxima música</string>
     <string name="cd_vol_up">Aumentar volume</string>
     <string name="cd_vol_down">Diminuir volume</string>
+    <string name="settings">Configurações</string>
+    <string name="tablet_mode">Modo tablet: tela sempre ligada e Alexa sempre ativa</string>
+    <string name="tablet_mode_hint">Liga sozinha quando o tablet reinicia. Ideal para deixar o tablet fixo, na tomada.</string>
+    <string name="battery_exempt">Não deixar o Android fechar a Alexa (bateria sem restrições)</string>
 </resources>

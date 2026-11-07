@@ -33,7 +33,13 @@ Assistente pessoal em português do Brasil que controla músicas e volume por vo
 | "Pode parar de ouvir" · "tchau" | Desliga a escuta contínua |
 | "Ajuda" | Lista os comandos |
 
-**Como chamar a A**
+**Modo tablet (padrão)**
+
+- Tela cheia com relógio, **ondas azuis animadas** que reagem à sua voz e à fala da Alexa, e a música tocando no rodapé.
+- Tela sempre ligada, Alexa sempre ouvindo; volta sozinha quando o tablet reinicia ou o app é atualizado (com "exibir sobre outros apps" permitido).
+- Configurações na engrenagem do canto superior direito.
+
+**Como chamar a Alexa**
 
 - **Escuta contínua:** diga **"Alexa"** a qualquer momento — **funciona com a tela apagada**. Ela responde "Oi!" / "Oi, boa noite!", você faz o pedido e ela repete antes de executar ("Tocando Alcione"). Sem dizer "Alexa", a música segue normalmente.
 - Enquanto espera o nome, ela usa um reconhecedor **offline** (Vosk) que não mexe na música; o Google só é usado para entender o pedido depois do "Oi".

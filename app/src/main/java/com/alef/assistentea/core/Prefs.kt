@@ -12,6 +12,11 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("auto_bluetooth", false)
         set(v) = sp.edit().putBoolean("auto_bluetooth", v).apply()
 
+    /** Modo tablet: tela sempre ligada, Alexa sempre ouvindo e ligando sozinha ao reiniciar. */
+    var tabletMode: Boolean
+        get() = sp.getBoolean("tablet_mode", true)
+        set(v) = sp.edit().putBoolean("tablet_mode", v).apply()
+
     /** Tocar um bipe quando a Alexa for chamada (como a Alexa). */
     var wakeBeep: Boolean
         get() = sp.getBoolean("wake_beep", true)

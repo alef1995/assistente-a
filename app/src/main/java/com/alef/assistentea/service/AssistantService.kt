@@ -13,6 +13,8 @@ import android.content.pm.ServiceInfo
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
+import com.alef.assistentea.core.Prefs
 import com.alef.assistentea.MainActivity
 import com.alef.assistentea.R
 import com.alef.assistentea.core.AssistantEngine
@@ -97,6 +99,7 @@ class AssistantService : Service(), AssistantEngine.Host {
     private lateinit var engine: AssistantEngine
     private val binder = LocalBinder()
     private var inForeground = false
+    private var wakeLock: PowerManager.WakeLock? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -108,7 +111,10 @@ class AssistantService : Service(), AssistantEngine.Host {
     override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val action = intent?.action ?: ACTION_TAP
+        // intent == null: o Android reiniciou o serviço depois de fechá-lo.
+        // No modo tablet, volta a ficar sempre ouvindo.
+        val action = intent?.action
+            ?: if (Prefs(this).tabletMode) ACTION_CONTINUOUS_ON else ACTION_TAP
         if (!inForeground && !goForeground()) {
             // Sem permissão para usar o microfone agora: avisa e encerra
             Activation.notifyTapToActivate(this, "Toque para a Alexa começar a ouvir.")
@@ -128,10 +134,11 @@ class AssistantService : Service(), AssistantEngine.Host {
                 stopEverything()
             }
         }
-        return START_NOT_STICKY
+        return if (engine.continuous) START_STICKY else START_NOT_STICKY
     }
 
     override fun onDestroy() {
+        releaseWakeLock()
         isRunning = false
         continuousOn = false
         MicWidget.refreshAll(this)
@@ -147,6 +154,7 @@ class AssistantService : Service(), AssistantEngine.Host {
 
     override fun onContinuousChanged(on: Boolean) {
         continuousOn = on
+        if (on) acquireWakeLock() else releaseWakeLock()
         if (inForeground) {
             getSystemService(NotificationManager::class.java).notify(NOTIF_RUNNING, buildNotification())
         }
@@ -159,6 +167,29 @@ class AssistantService : Service(), AssistantEngine.Host {
 
     private fun onEngineIdleIfQuiet() {
         if (!engine.continuous && engine.state == AssistantEngine.State.IDLE) stopEverything()
+    }
+
+    // ================================================================== mantém o processador acordado
+
+    /** Com a escuta sempre ligada, impede o Android de "adormecer" o processador com a tela apagada. */
+    private fun acquireWakeLock() {
+        if (wakeLock?.isHeld == true) return
+        try {
+            wakeLock = getSystemService(PowerManager::class.java)
+                .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Alexa:escuta").apply {
+                    setReferenceCounted(false)
+                    acquire()
+                }
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun releaseWakeLock() {
+        try {
+            wakeLock?.let { if (it.isHeld) it.release() }
+        } catch (_: Exception) {
+        }
+        wakeLock = null
     }
 
     // ================================================================== primeiro plano
