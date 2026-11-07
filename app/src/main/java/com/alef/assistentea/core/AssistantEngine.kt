@@ -38,6 +38,8 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         fun onContinuousChanged(on: Boolean)
         /** O Android não deixou usar o microfone em segundo plano. */
         fun onMicBlocked()
+        /** A Zuri foi chamada: acende a tela e mostra as ondas. */
+        fun wakeScreen()
     }
 
     /** A tela, quando aberta. */
@@ -252,6 +254,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
             is Command.Play -> greetAndListen("Oi! Qual música?") // nomes de músicas: melhor ouvir com o Google
             is Command.Unknown, Command.WakeOnly -> greetAndListen()
             else -> {
+                host.wakeScreen()
                 setState(State.PROCESSING)
                 execute(cmd)
             }
@@ -261,6 +264,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
     /** "Oi, boa noite!" e escuta o pedido (a música abaixa só agora). */
     private fun greetAndListen(text: String = greetingShort()) {
         main.removeCallbacks(wakeTrigger)
+        host.wakeScreen()
         setState(State.PROCESSING)
         reply(text) {
             afterGreeting = true

@@ -165,6 +165,29 @@ class AssistantService : Service(), AssistantEngine.Host {
         Activation.notifyTapToActivate(this, "O Android pausou o microfone. Toque para a Zuri voltar a ouvir.")
     }
 
+    /** Acende a tela (mesmo bloqueada) e traz as ondas da Zuri para a frente. */
+    override fun wakeScreen() {
+        try {
+            val pm = getSystemService(PowerManager::class.java)
+            if (!pm.isInteractive) {
+                @Suppress("DEPRECATION")
+                pm.newWakeLock(
+                    PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP or
+                        PowerManager.ON_AFTER_RELEASE,
+                    "Zuri:tela"
+                ).acquire(8000)
+            }
+            if (Prefs(this).tabletMode) {
+                startActivity(
+                    Intent(this, MainActivity::class.java).addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                    )
+                )
+            }
+        } catch (_: Exception) {
+        }
+    }
+
     private fun onEngineIdleIfQuiet() {
         if (!engine.continuous && engine.state == AssistantEngine.State.IDLE) stopEverything()
     }

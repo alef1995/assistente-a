@@ -148,6 +148,11 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         findViewById<ImageButton>(R.id.settingsButton).setOnClickListener { showSettings(true) }
         findViewById<ImageButton>(R.id.closeSettings).setOnClickListener { showSettings(false) }
 
+        findViewById<Switch>(R.id.screenSaverSwitch).apply {
+            isChecked = prefs.screenSaver
+            setOnCheckedChangeListener { _, checked -> prefs.screenSaver = checked; applyTabletMode() }
+        }
+
         tabletSwitch.isChecked = prefs.tabletMode
         tabletSwitch.setOnCheckedChangeListener { _, checked ->
             prefs.tabletMode = checked
@@ -278,9 +283,20 @@ class MainActivity : Activity(), AssistantEngine.Ui {
     }
 
     /** Modo tablet: tela sempre ligada e em tela cheia (sem barras do sistema). */
+    /** Economia de energia: deixa a tela apagar sozinha (tempo de tela do Android). */
+    private val allowScreenOff = Runnable { window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
+
+    /** Mantém a tela acesa agora; com a economia ligada, libera para apagar depois de [ms]. */
+    private fun keepScreenOnFor(ms: Long) {
+        main.removeCallbacks(allowScreenOff)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        if (prefs.screenSaver) main.postDelayed(allowScreenOff, ms)
+    }
+
     private fun applyTabletMode() {
         if (prefs.tabletMode) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            // Tela sempre acesa, ou (economia) acesa só enquanto a Zuri é usada
+            keepScreenOnFor(30_000)
             if (Build.VERSION.SDK_INT >= 30) {
                 window.insetsController?.let {
                     it.hide(WindowInsets.Type.systemBars())
@@ -412,6 +428,11 @@ class MainActivity : Activity(), AssistantEngine.Ui {
 
     override fun onState(state: AssistantEngine.State, continuous: Boolean, manual: Boolean) {
         setContinuousChecked(continuous)
+        // Enquanto ouve/fala, a tela fica acesa; depois de 20 s parada, pode apagar (economia)
+        if (prefs.tabletMode) {
+            if (state == AssistantEngine.State.IDLE) keepScreenOnFor(20_000)
+            else keepScreenOnFor(60_000)
+        }
         if (state == shownState && state != AssistantEngine.State.IDLE) return
         shownState = state
         when (state) {

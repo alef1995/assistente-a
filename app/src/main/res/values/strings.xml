@@ -24,11 +24,13 @@
     <string name="cd_vol_up">Aumentar volume</string>
     <string name="cd_vol_down">Diminuir volume</string>
     <string name="settings">Configurações</string>
-    <string name="tablet_mode">Modo tablet: tela sempre ligada e Zuri sempre ativa</string>
+    <string name="tablet_mode">Modo tablet: Zuri sempre ativa, em tela cheia</string>
     <string name="tablet_mode_hint">Liga sozinha quando o tablet reinicia. Ideal para deixar o tablet fixo, na tomada.</string>
     <string name="battery_exempt">Não deixar o Android fechar a Zuri (bateria sem restrições)</string>
     <string name="update_now">Atualizar</string>
     <string name="check_update">Procurar atualização</string>
     <string name="youtube_in_app">YouTube: tocar no app Morphe (sem propaganda)</string>
     <string name="youtube_in_app_hint">Desligado: toca na tela da Zuri, com propaganda. Ligado: toca no app Morphe, sem propaganda, mas ele aparece por alguns segundos.</string>
+    <string name="screen_saver">Economia de energia: apagar a tela quando parada</string>
+    <string name="screen_saver_hint">A tela apaga sozinha (no tempo de tela do Android) e acende quando você chama \"Zuri\". O microfone continua ouvindo.</string>
 </resources>

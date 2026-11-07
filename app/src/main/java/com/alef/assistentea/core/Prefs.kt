@@ -22,6 +22,11 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("youtube_in_app", false)
         set(v) = sp.edit().putBoolean("youtube_in_app", v).apply()
 
+    /** Economia de energia: a tela apaga quando ninguém está usando e acende ao chamar a Zuri. */
+    var screenSaver: Boolean
+        get() = sp.getBoolean("screen_saver", true)
+        set(v) = sp.edit().putBoolean("screen_saver", v).apply()
+
     /** Tocar um bipe quando a Zuri for chamada (como a Zuri). */
     var wakeBeep: Boolean
         get() = sp.getBoolean("wake_beep", true)
