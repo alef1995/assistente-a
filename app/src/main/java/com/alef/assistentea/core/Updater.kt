@@ -43,7 +43,7 @@ class Updater(private val context: Context) {
                     connectTimeout = 8000
                     readTimeout = 8000
                     setRequestProperty("Accept", "application/vnd.github+json")
-                    setRequestProperty("User-Agent", "Alexa-app")
+                    setRequestProperty("User-Agent", "Zuri-app")
                 }
                 val json = JSONObject(conn.inputStream.bufferedReader().use { it.readText() })
                 conn.disconnect()
@@ -77,7 +77,7 @@ class Updater(private val context: Context) {
                         connectTimeout = 10000
                         readTimeout = 30000
                         instanceFollowRedirects = true
-                        setRequestProperty("User-Agent", "Alexa-app")
+                        setRequestProperty("User-Agent", "Zuri-app")
                     }
                     val total = if (conn.contentLengthLong > 0) conn.contentLengthLong else release.size
                     conn.inputStream.use { input ->

@@ -15,9 +15,9 @@ import android.provider.MediaStore
 /**
  * Manda um app de música (ex.: Spotify) tocar SEM abrir a tela dele.
  *
- * Usa o mesmo canal que o Android Auto usa nos carros ("MediaBrowserService"): a Alexa se conecta
+ * Usa o mesmo canal que o Android Auto usa nos carros ("MediaBrowserService"): a Zuri se conecta
  * ao serviço de música do app, recebe o controle dele e pede "toque tal coisa". O app toca em
- * segundo plano. Se o app não aceitar a conexão, [play] responde false e a Alexa usa o jeito antigo.
+ * segundo plano. Se o app não aceitar a conexão, [play] responde false e a Zuri usa o jeito antigo.
  */
 class BackgroundPlayer(private val context: Context) {
 

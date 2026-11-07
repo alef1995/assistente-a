@@ -27,7 +27,7 @@ class SpeechListener(private val context: Context, private val callback: Callbac
 
     companion object {
         private val BIASING = arrayListOf(
-            "Alexa", "tocar", "pausar", "continuar", "próxima", "anterior", "parar", "volume",
+            "Zuri", "tocar", "pausar", "continuar", "próxima", "anterior", "parar", "volume",
             "aumentar volume", "diminuir volume", "silenciar", "lanterna", "timer", "despertador",
             "que horas são", "bateria", "abrir", "músicas do", "que música é essa"
         )
@@ -58,7 +58,7 @@ class SpeechListener(private val context: Context, private val callback: Callbac
             putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1200L)
             putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1000L)
             putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, false)
-            // Android 13+: dá "dicas" ao reconhecedor sobre as palavras que a Alexa espera ouvir,
+            // Android 13+: dá "dicas" ao reconhecedor sobre as palavras que a Zuri espera ouvir,
             // o que reduz trocas como "posar" no lugar de "pausar".
             putStringArrayListExtra("android.speech.extra.BIASING_STRINGS", BIASING)
         }

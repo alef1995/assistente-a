@@ -19,10 +19,10 @@ import kotlin.math.sin
 /**
  * Ondas fluidas em tons de azul, no estilo das assistentes de IA.
  *
- *  - [Mode.IDLE]: respiração calma, esperando "Alexa";
+ *  - [Mode.IDLE]: respiração calma, esperando "Zuri";
  *  - [Mode.LISTENING]: as ondas seguem a sua voz ([setLevel]);
  *  - [Mode.THINKING]: pulso rápido enquanto entende o pedido;
- *  - [Mode.SPEAKING]: ritmo de fala enquanto a Alexa responde.
+ *  - [Mode.SPEAKING]: ritmo de fala enquanto a Zuri responde.
  *
  * Desenhada à mão (Canvas), sem bibliotecas, a 60 quadros por segundo.
  */

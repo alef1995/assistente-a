@@ -140,7 +140,7 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         micButton.setOnClickListener {
             withMicPermission { AssistantService.start(this, AssistantService.ACTION_TAP) }
         }
-        // Tocar nas ondas também chama a Alexa
+        // Tocar nas ondas também chama a Zuri
         waveView.setOnClickListener {
             withMicPermission { AssistantService.start(this, AssistantService.ACTION_TAP) }
         }
@@ -183,7 +183,7 @@ class MainActivity : Activity(), AssistantEngine.Ui {
             updater.check { r ->
                 release = r
                 showUpdateButton()
-                if (r == null) onReply("A Alexa já está na versão mais nova (${updater.currentVersion()}).", false)
+                if (r == null) onReply("A Zuri já está na versão mais nova (${updater.currentVersion()}).", false)
                 else installUpdate()
             }
         }
@@ -200,17 +200,17 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         }
 
         mediaAccessButton.setOnClickListener {
-            onReply("Ative a \"Alexa\" na lista e volte para o app.", false)
+            onReply("Ative a \"Zuri\" na lista e volte para o app.", false)
             openSettings(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
         }
 
         overlayButton.setOnClickListener {
-            onReply("Ative \"Permitir exibição sobre outros apps\" para a Alexa e volte.", false)
+            onReply("Ative \"Permitir exibição sobre outros apps\" para a Zuri e volte.", false)
             openSettings(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
         }
 
         findViewById<TextView>(R.id.assistantButton).setOnClickListener {
-            onReply("Em \"App assistente\" (ou \"Assistente digital\"), escolha a Alexa. " +
+            onReply("Em \"App assistente\" (ou \"Assistente digital\"), escolha a Zuri. " +
                 "Depois é só segurar o botão de início para chamá-la.", false)
             openSettings(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS))
         }
@@ -240,7 +240,7 @@ class MainActivity : Activity(), AssistantEngine.Ui {
                 }
                 onReply(
                     if (Settings.canDrawOverlays(this))
-                        "Pronto! Quando a caixa conectar, a Alexa começa a ouvir sozinha."
+                        "Pronto! Quando a caixa conectar, a Zuri começa a ouvir sozinha."
                     else
                         "Pronto! Para ligar sem precisar tocar na notificação, permita \"exibir sobre outros apps\" abaixo.",
                     false
@@ -263,6 +263,10 @@ class MainActivity : Activity(), AssistantEngine.Ui {
 
     private fun showSettings(show: Boolean) {
         if (show) {
+            val forms = engine?.wakeForms.orEmpty()
+            findViewById<TextView>(R.id.wakeFormsText).text =
+                if (forms.isEmpty()) "Reconhecedor offline: carregando (ou indisponível; usando o do Google)."
+                else "O nome é reconhecido como: " + forms.joinToString(", ")
             settingsPanel.alpha = 0f
             settingsPanel.visibility = View.VISIBLE
             settingsPanel.animate().alpha(1f).setDuration(200).start()
@@ -318,7 +322,7 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         overlayButton.visibility = if (Settings.canDrawOverlays(this)) View.GONE else View.VISIBLE
         val pm = getSystemService(PowerManager::class.java)
         batteryButton.visibility = if (pm.isIgnoringBatteryOptimizations(packageName)) View.GONE else View.VISIBLE
-        // Modo tablet: a Alexa fica sempre ouvindo
+        // Modo tablet: a Zuri fica sempre ouvindo
         if (prefs.tabletMode && hasMicPermission() && !AssistantService.continuousOn) {
             main.postDelayed({ AssistantService.start(this, AssistantService.ACTION_CONTINUOUS_ON) }, 600)
         } else if (prefs.tabletMode && !hasMicPermission() && !micDeniedOnce) {
@@ -414,12 +418,12 @@ class MainActivity : Activity(), AssistantEngine.Ui {
             AssistantEngine.State.IDLE -> {
                 waveView.mode = WaveView.Mode.IDLE
                 waveView.setLevel(0f)
-                statusText.text = if (continuous) "Diga “Alexa”" else getString(R.string.status_idle)
+                statusText.text = if (continuous) "Diga “Zuri”" else getString(R.string.status_idle)
                 micButton.setImageResource(R.drawable.ic_mic)
             }
             AssistantEngine.State.LISTENING -> {
                 waveView.mode = WaveView.Mode.LISTENING
-                statusText.text = if (continuous && !manual) "Diga “Alexa”" else getString(R.string.status_listening)
+                statusText.text = if (continuous && !manual) "Diga “Zuri”" else getString(R.string.status_listening)
                 micButton.setImageResource(R.drawable.ic_stop)
             }
             AssistantEngine.State.PROCESSING -> {
@@ -473,7 +477,7 @@ class MainActivity : Activity(), AssistantEngine.Ui {
     private fun installUpdate() {
         val r = release ?: return
         if (!updater.canInstall()) {
-            onReply("Permita \"Instalar apps desconhecidos\" para a Alexa e toque em Atualizar de novo.", false)
+            onReply("Permita \"Instalar apps desconhecidos\" para a Zuri e toque em Atualizar de novo.", false)
             openSettings(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
             return
         }
@@ -494,7 +498,7 @@ class MainActivity : Activity(), AssistantEngine.Ui {
     private fun showTrack(t: TrackInfo?) {
         if (youtube.isActive) {
             trackTitle.text = youtube.title ?: "YouTube"
-            trackArtist.text = "YouTube · na tela da Alexa"
+            trackArtist.text = "YouTube · na tela da Zuri"
             refreshPlayButton()
             return
         }

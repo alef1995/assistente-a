@@ -33,7 +33,7 @@ Faça na ordem. Anote o número do passo que falhar e a mensagem que aparece em 
 | 12 | Ligue "Escuta contínua", diga "A, pausar" sem tocar na tela | Música pausa |
 | 13 | Diga uma frase qualquer sem "A" | A ignora |
 
-## Novidades (versão "mais perto da Alexa")
+## Novidades (versão "mais perto da Zuri")
 | # | Ação | Esperado |
 |---|---|---|
 | 14 | Ligue "Escuta contínua", **apague a tela**, diga "A, pausar" | Música pausa com a tela apagada; notificação "A está ouvindo" |
@@ -43,7 +43,7 @@ Faça na ordem. Anote o número do passo que falhar e a mensagem que aparece em 
 | 18 | Ative "Ligar sozinha com a caixa", desligue e ligue a caixa | Ao conectar, a A começa a ouvir (ou aparece a notificação "toque para ativar") |
 | 19 | Desligue a caixa | A notificação "A está ouvindo" some |
 | 20 | Adicione o widget "Falar com a A" na tela inicial e toque no microfone | A ouve sem abrir o app |
-| 21 | Com a caixa conectada, fale perto do **celular** | A Alexa ouve pelo microfone do celular, e a música na caixa não perde qualidade |
+| 21 | Com a caixa conectada, fale perto do **celular** | A Zuri ouve pelo microfone do celular, e a música na caixa não perde qualidade |
 | 22 | "A, pode parar de ouvir" | Escuta contínua desliga |
 
 ## Problemas comuns

@@ -9,7 +9,7 @@ import com.alef.assistentea.R
 import com.alef.assistentea.service.AssistantService
 
 /**
- * Widget da tela inicial: botão grande para falar com a Alexa e botão para ligar/desligar a escuta contínua.
+ * Widget da tela inicial: botão grande para falar com a Zuri e botão para ligar/desligar a escuta contínua.
  * Tocar no widget é uma das formas que o Android aceita para ligar o microfone em segundo plano.
  */
 class MicWidget : AppWidgetProvider() {

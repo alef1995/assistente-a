@@ -6,10 +6,10 @@ import android.media.AudioManager
 import android.os.Build
 
 /**
- * Garante que a Alexa ouça pelo microfone do próprio celular.
+ * Garante que a Zuri ouça pelo microfone do próprio celular.
  *
  * O microfone de caixas/fones Bluetooth costuma ser fraco e, quando ativado (modo "chamada"),
- * ainda derruba a qualidade da música. Se algum app (ou uma versão antiga da Alexa) deixou
+ * ainda derruba a qualidade da música. Se algum app (ou uma versão antiga da Zuri) deixou
  * o áudio preso no Bluetooth em modo chamada, isto devolve para o normal.
  * Não mexe em nada durante uma ligação de verdade.
  */

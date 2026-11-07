@@ -10,15 +10,15 @@ class CommandParserTest {
     private fun cmd(s: String) = CommandParser.parse(s).command
 
     @Test fun tocarArtista() {
-        assertEquals(Command.Play("Matuê"), cmd("Alexa, tocar Matuê"))
-        assertEquals(Command.Play("Evidências"), cmd("Alexa tocar Evidências."))
+        assertEquals(Command.Play("Matuê"), cmd("Zuri, tocar Matuê"))
+        assertEquals(Command.Play("Evidências"), cmd("Zuri tocar Evidências."))
         assertEquals(Command.Play("Evidências"), cmd("toca a música Evidências"))
     }
 
     @Test fun tocarMusicasDoArtista() {
         assertEquals(
             Command.Play("Henrique e Juliano", "Henrique e Juliano"),
-            cmd("Alexa, tocar músicas do Henrique e Juliano.")
+            cmd("Zuri, tocar músicas do Henrique e Juliano.")
         )
         assertEquals(
             Command.Play("Marília Mendonça", "Marília Mendonça"),
@@ -32,15 +32,15 @@ class CommandParserTest {
     }
 
     @Test fun navegacao() {
-        assertEquals(Command.Next, cmd("Alexa, próxima música."))
+        assertEquals(Command.Next, cmd("Zuri, próxima música."))
         assertEquals(Command.Next, cmd("pula essa"))
         assertEquals(Command.Next, cmd("toca a próxima"))
         assertEquals(Command.Previous, cmd("música anterior"))
-        assertEquals(Command.Pause, cmd("Alexa, pausar."))
-        assertEquals(Command.Resume, cmd("Alexa, continuar."))
+        assertEquals(Command.Pause, cmd("Zuri, pausar."))
+        assertEquals(Command.Resume, cmd("Zuri, continuar."))
         assertEquals(Command.Resume, cmd("despausar"))
         assertEquals(Command.Resume, cmd("toca o som"))
-        assertEquals(Command.Stop, cmd("Alexa, parar a música."))
+        assertEquals(Command.Stop, cmd("Zuri, parar a música."))
     }
 
     /** Como os reconhecedores costumam transcrever errado. */
@@ -53,52 +53,59 @@ class CommandParserTest {
         assertEquals(Command.SetVolume(40), cmd("volume 40"))
     }
 
-    @Test fun nomeAlexa() {
-        assertEquals(Command.WakeOnly, cmd("Alexa"))
-        assertEquals(Command.WakeOnly, cmd("Alexia"))
-        assertEquals(Command.WakeOnly, cmd("a lexa"))
-        assertEquals(Command.WakeOnly, cmd("Ei, Alexa"))
-        assertEquals(Command.Pause, cmd("Alessa, pausar"))
-        assertEquals(Command.Next, cmd("Aleixa próxima"))
-        assertEquals(Command.Play("Alcione"), cmd("Alexa, tocar Alcione"))
-        assertTrue(CommandParser.parse("Alexa toca Raça Negra").hadWakeWord)
+    @Test fun nomeZuri() {
+        assertEquals(Command.WakeOnly, cmd("Zuri"))
+        assertEquals(Command.WakeOnly, cmd("Zury"))
+        assertEquals(Command.WakeOnly, cmd("Suri"))
+        assertEquals(Command.WakeOnly, cmd("zu ri"))
+        assertEquals(Command.WakeOnly, cmd("Ei, Zuri"))
+        assertEquals(Command.Pause, cmd("Zuri, pausar"))
+        assertEquals(Command.Next, cmd("Zury próxima"))
+        assertEquals(Command.Play("Alcione"), cmd("Zuri, tocar Alcione"))
+        assertTrue(CommandParser.parse("Zuri toca Raça Negra").hadWakeWord)
+        // palavras de letras de música que antes confundiam
+        assertFalse(CommandParser.parse("Alexa").hadWakeWord)
+        assertFalse(CommandParser.parse("a lessa").hadWakeWord)
         assertFalse(CommandParser.parse("a gente toca junto").hadWakeWord)
         assertFalse(CommandParser.parse("pausar").hadWakeWord)
         assertFalse(CommandParser.parse("a próxima").hadWakeWord)
+        assertFalse(CommandParser.parse("zero").hadWakeWord)
+        assertFalse(CommandParser.parse("juro").hadWakeWord)
+        assertFalse(CommandParser.parse("sorri pra mim").hadWakeWord)
         // reconhecedor offline: o nome pode aparecer no meio de pedaços da música
-        assertEquals("", CommandParser.findWake("amor alexa"))
-        assertEquals("pausar", CommandParser.findWake("alexa pausar"))
-        assertEquals("tocar alcione", CommandParser.findWake("e a lexa tocar alcione"))
+        assertEquals("", CommandParser.findWake("amor zuri"))
+        assertEquals("pausar", CommandParser.findWake("zuri pausar"))
+        assertEquals("tocar alcione", CommandParser.findWake("ei zu ri tocar alcione"))
         assertEquals(null, CommandParser.findWake("a vida é bela"))
         assertEquals(null, CommandParser.findWake("a lisa"))
     }
 
     @Test fun volume() {
-        assertEquals(Command.VolumeUp, cmd("Alexa, aumentar volume."))
-        assertEquals(Command.VolumeDown, cmd("Alexa, diminuir volume."))
+        assertEquals(Command.VolumeUp, cmd("Zuri, aumentar volume."))
+        assertEquals(Command.VolumeDown, cmd("Zuri, diminuir volume."))
         assertEquals(Command.VolumeDown, cmd("abaixa o som"))
-        assertEquals(Command.VolumeDown, cmd("Alexa, abaixa o som"))
-        assertEquals(Command.SetVolume(50), cmd("Alexa, volume 50%."))
+        assertEquals(Command.VolumeDown, cmd("Zuri, abaixa o som"))
+        assertEquals(Command.SetVolume(50), cmd("Zuri, volume 50%."))
         assertEquals(Command.SetVolume(50), cmd("volume cinquenta por cento"))
         assertEquals(Command.SetVolume(35), cmd("coloca o volume em trinta e cinco"))
         assertEquals(Command.SetVolume(100), cmd("volume máximo"))
         assertEquals(Command.VolumeQuery, cmd("qual o volume"))
-        assertEquals(Command.Mute, cmd("Alexa, silenciar."))
+        assertEquals(Command.Mute, cmd("Zuri, silenciar."))
         assertEquals(Command.Unmute, cmd("tirar do mudo"))
     }
 
     @Test fun utilidades() {
-        assertEquals(Command.Time, cmd("Alexa, que horas são?"))
+        assertEquals(Command.Time, cmd("Zuri, que horas são?"))
         assertEquals(Command.Date, cmd("que dia é hoje"))
         assertEquals(Command.Battery, cmd("quanto tem de bateria"))
-        assertEquals(Command.Flashlight(true), cmd("Alexa, liga a lanterna"))
+        assertEquals(Command.Flashlight(true), cmd("Zuri, liga a lanterna"))
         assertEquals(Command.Flashlight(false), cmd("apaga a lanterna"))
-        assertEquals(Command.OpenApp("WhatsApp"), cmd("Alexa, abrir o WhatsApp"))
+        assertEquals(Command.OpenApp("WhatsApp"), cmd("Zuri, abrir o WhatsApp"))
         assertEquals(Command.OpenApp("Waze"), cmd("abre Waze"))
     }
 
     @Test fun temporizador() {
-        assertEquals(Command.Timer(300), cmd("Alexa, timer de 5 minutos"))
+        assertEquals(Command.Timer(300), cmd("Zuri, timer de 5 minutos"))
         assertEquals(Command.Timer(300), cmd("coloca um timer de cinco minutos"))
         assertEquals(Command.Timer(90), cmd("temporizador de um minuto e trinta segundos"))
         assertEquals(Command.Timer(1800), cmd("timer de meia hora"))
@@ -108,7 +115,7 @@ class CommandParserTest {
     }
 
     @Test fun despertador() {
-        assertEquals(Command.Alarm(7, 0), cmd("Alexa, despertador às 7"))
+        assertEquals(Command.Alarm(7, 0), cmd("Zuri, despertador às 7"))
         assertEquals(Command.Alarm(6, 30), cmd("me acorda às seis e meia"))
         assertEquals(Command.Alarm(7, 30), cmd("alarme para 7:30"))
         assertEquals(Command.Alarm(22, 0), cmd("coloca um alarme às 10 da noite"))
@@ -119,10 +126,10 @@ class CommandParserTest {
     }
 
     @Test fun conversa() {
-        assertEquals(Command.Joke, cmd("Alexa, conta uma piada"))
+        assertEquals(Command.Joke, cmd("Zuri, conta uma piada"))
         assertEquals(Command.Thanks, cmd("obrigado"))
-        assertEquals(Command.Greeting, cmd("Alexa, bom dia"))
-        assertEquals(Command.StopListening, cmd("Alexa, pode parar de ouvir"))
+        assertEquals(Command.Greeting, cmd("Zuri, bom dia"))
+        assertEquals(Command.StopListening, cmd("Zuri, pode parar de ouvir"))
         assertEquals(Command.StopListening, cmd("tchau"))
         assertEquals(Command.Cancel, cmd("deixa pra lá"))
         assertEquals(Command.Help, cmd("ajuda"))
@@ -136,7 +143,7 @@ class CommandParserTest {
     @Test fun melhorAlternativa() {
         val r = CommandParser.parseBest(listOf("blá blá", "pausar"))
         assertEquals(Command.Pause, r.command)
-        val w = CommandParser.parseBest(listOf("pausar", "alexa pausar"), preferWake = true)
+        val w = CommandParser.parseBest(listOf("pausar", "zuri pausar"), preferWake = true)
         assertTrue(w.hadWakeWord)
     }
 }

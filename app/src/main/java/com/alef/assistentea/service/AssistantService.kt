@@ -21,10 +21,10 @@ import com.alef.assistentea.core.AssistantEngine
 import com.alef.assistentea.widget.MicWidget
 
 /**
- * Serviço em primeiro plano que mantém a Alexa ouvindo mesmo com a tela apagada.
+ * Serviço em primeiro plano que mantém a Zuri ouvindo mesmo com a tela apagada.
  *
  * O Android exige uma notificação fixa enquanto o microfone é usado em segundo plano —
- * é ela que mostra "Alexa está ouvindo" e tem os botões Falar / Parar.
+ * é ela que mostra "Zuri está ouvindo" e tem os botões Falar / Parar.
  * Quando a escuta contínua está desligada, o serviço termina sozinho depois de cada pedido,
  * para não gastar bateria.
  */
@@ -79,14 +79,14 @@ class AssistantService : Service(), AssistantEngine.Host {
         fun createChannels(context: Context) {
             val nm = context.getSystemService(NotificationManager::class.java)
             nm.createNotificationChannel(
-                NotificationChannel(CHANNEL_RUNNING, "Alexa ativa", NotificationManager.IMPORTANCE_LOW).apply {
-                    description = "Aparece enquanto a Alexa está ouvindo"
+                NotificationChannel(CHANNEL_RUNNING, "Zuri ativa", NotificationManager.IMPORTANCE_LOW).apply {
+                    description = "Aparece enquanto a Zuri está ouvindo"
                     setShowBadge(false)
                 }
             )
             nm.createNotificationChannel(
-                NotificationChannel(CHANNEL_ALERTS, "Avisos da Alexa", NotificationManager.IMPORTANCE_HIGH).apply {
-                    description = "Ex.: caixa Bluetooth conectada, toque para ativar a Alexa"
+                NotificationChannel(CHANNEL_ALERTS, "Avisos da Zuri", NotificationManager.IMPORTANCE_HIGH).apply {
+                    description = "Ex.: caixa Bluetooth conectada, toque para ativar a Zuri"
                 }
             )
         }
@@ -117,7 +117,7 @@ class AssistantService : Service(), AssistantEngine.Host {
             ?: if (Prefs(this).tabletMode) ACTION_CONTINUOUS_ON else ACTION_TAP
         if (!inForeground && !goForeground()) {
             // Sem permissão para usar o microfone agora: avisa e encerra
-            Activation.notifyTapToActivate(this, "Toque para a Alexa começar a ouvir.")
+            Activation.notifyTapToActivate(this, "Toque para a Zuri começar a ouvir.")
             stopSelf()
             return START_NOT_STICKY
         }
@@ -162,7 +162,7 @@ class AssistantService : Service(), AssistantEngine.Host {
     }
 
     override fun onMicBlocked() {
-        Activation.notifyTapToActivate(this, "O Android pausou o microfone. Toque para a Alexa voltar a ouvir.")
+        Activation.notifyTapToActivate(this, "O Android pausou o microfone. Toque para a Zuri voltar a ouvir.")
     }
 
     private fun onEngineIdleIfQuiet() {
@@ -176,7 +176,7 @@ class AssistantService : Service(), AssistantEngine.Host {
         if (wakeLock?.isHeld == true) return
         try {
             wakeLock = getSystemService(PowerManager::class.java)
-                .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Alexa:escuta").apply {
+                .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Zuri:escuta").apply {
                     setReferenceCounted(false)
                     acquire()
                 }
@@ -221,8 +221,8 @@ class AssistantService : Service(), AssistantEngine.Host {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val continuous = this::engine.isInitialized && engine.continuous
-        val title = if (continuous) "Alexa está ouvindo" else "Alexa ativa"
-        val text = if (continuous) "Diga \"Alexa, …\" — funciona com a tela apagada" else "Fale seu pedido"
+        val title = if (continuous) "Zuri está ouvindo" else "Zuri ativa"
+        val text = if (continuous) "Diga \"Zuri, …\" — funciona com a tela apagada" else "Fale seu pedido"
         val builder = Notification.Builder(this, CHANNEL_RUNNING)
             .setSmallIcon(R.drawable.ic_mic)
             .setContentTitle(title)

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Tela principal da Alexa, pensada para ficar sempre ligada num tablet:
+    Tela principal da Zuri, pensada para ficar sempre ligada num tablet:
     relógio no alto, ondas azuis no centro (toque nelas para falar),
     respostas logo abaixo e a música tocando no rodapé.
     As configurações ficam num painel separado (botão de engrenagem).
@@ -22,7 +22,7 @@
         android:contentDescription="@string/widget_label"
         android:focusable="true" />
 
-    <!-- Vídeo da música (player oficial do YouTube dentro da tela da Alexa) -->
+    <!-- Vídeo da música (player oficial do YouTube dentro da tela da Zuri) -->
     <FrameLayout
         android:id="@+id/videoCard"
         android:layout_width="320dp"
@@ -441,6 +441,14 @@
                 android:text="@string/set_assistant"
                 android:textColor="@color/text"
                 android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/wakeFormsText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:textColor="@color/text_dim"
+                android:textSize="12sp" />
 
             <TextView
                 android:layout_width="match_parent"

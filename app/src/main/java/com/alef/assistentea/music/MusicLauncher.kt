@@ -26,7 +26,7 @@ class MusicLauncher(private val context: Context) {
         data class Started(
             val playerLabel: String,
             val viaSession: Boolean = false,
-            /** App de vídeo (YouTube): abre por cima da tela da Alexa. */
+            /** App de vídeo (YouTube): abre por cima da tela da Zuri. */
             val videoApp: Boolean = false
         ) : Result()
         /** Nenhum app aceitou tocar direto; abrimos a busca para o usuário tocar. */
@@ -36,7 +36,7 @@ class MusicLauncher(private val context: Context) {
     }
 
     companion object {
-        /** YouTube modificado pelo Morphe (toca em segundo plano e sem anúncios): player principal da Alexa. */
+        /** YouTube modificado pelo Morphe (toca em segundo plano e sem anúncios): player principal da Zuri. */
         val MORPHE_YOUTUBE = Player("app.morphe.android.youtube", "YouTube (Morphe)")
 
         val KNOWN_PLAYERS = listOf(

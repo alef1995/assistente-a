@@ -33,21 +33,21 @@ Assistente pessoal em português do Brasil que controla músicas e volume por vo
 | "Pode parar de ouvir" · "tchau" | Desliga a escuta contínua |
 | "Ajuda" | Lista os comandos |
 
-**Música dentro da tela da Alexa:** a Alexa pesquisa no YouTube e toca com o **player oficial do YouTube embutido** num cartão de vídeo no canto da tela — o app do YouTube não abre. Para artista, monta uma fila com os primeiros resultados; vídeos bloqueados fora do YouTube são pulados.
+**Música dentro da tela da Zuri:** a Zuri pesquisa no YouTube e toca com o **player oficial do YouTube embutido** num cartão de vídeo no canto da tela — o app do YouTube não abre. Para artista, monta uma fila com os primeiros resultados; vídeos bloqueados fora do YouTube são pulados.
 
-**Atualização sem desinstalar:** a Alexa confere no GitHub se há versão nova e mostra o botão "Atualizar" no alto da tela (ou "Procurar atualização" nas configurações). Ela baixa e o Android só pede para confirmar.
+**Atualização sem desinstalar:** a Zuri confere no GitHub se há versão nova e mostra o botão "Atualizar" no alto da tela (ou "Procurar atualização" nas configurações). Ela baixa e o Android só pede para confirmar.
 
-**Plano B (tela da Alexa fechada):** o **YouTube (Morphe)** (`app.morphe.android.youtube`) é o player padrão quando está instalado — toda música pedida vai para ele. No modo tablet, quando a música começa, a tela da Alexa volta para a frente e o YouTube segue tocando em segundo plano. Dá para trocar o player nas configurações.
+**Plano B (tela da Zuri fechada):** o **YouTube (Morphe)** (`app.morphe.android.youtube`) é o player padrão quando está instalado — toda música pedida vai para ele. No modo tablet, quando a música começa, a tela da Zuri volta para a frente e o YouTube segue tocando em segundo plano. Dá para trocar o player nas configurações.
 
 **Modo tablet (padrão)**
 
-- Tela cheia com relógio, **ondas azuis animadas** que reagem à sua voz e à fala da Alexa, e a música tocando no rodapé.
-- Tela sempre ligada, Alexa sempre ouvindo; volta sozinha quando o tablet reinicia ou o app é atualizado (com "exibir sobre outros apps" permitido).
+- Tela cheia com relógio, **ondas azuis animadas** que reagem à sua voz e à fala da Zuri, e a música tocando no rodapé.
+- Tela sempre ligada, Zuri sempre ouvindo; volta sozinha quando o tablet reinicia ou o app é atualizado (com "exibir sobre outros apps" permitido).
 - Configurações na engrenagem do canto superior direito.
 
-**Como chamar a Alexa**
+**Como chamar a Zuri**
 
-- **Escuta contínua:** diga **"Alexa"** a qualquer momento — **funciona com a tela apagada**. Ela responde "Oi!" / "Oi, boa noite!", você faz o pedido e ela repete antes de executar ("Tocando Alcione"). Sem dizer "Alexa", a música segue normalmente.
+- **Escuta contínua:** diga **"Zuri"** a qualquer momento — **funciona com a tela apagada**. Ela responde "Oi!" / "Oi, boa noite!", você faz o pedido e ela repete antes de executar ("Tocando Alcione"). Sem dizer "Zuri", a música segue normalmente.
 - Enquanto espera o nome, ela usa um reconhecedor **offline** (Vosk) que não mexe na música; o Google só é usado para entender o pedido depois do "Oi".
 - **Ligar sozinha com a caixa Bluetooth:** conectou a caixa, a A começa a ouvir; desconectou, ela para (poupa bateria).
 - **Microfone:** sempre o do celular onde o app está instalado (o da caixa Bluetooth é fraco e derruba a qualidade do som). Deixe o celular perto de onde você fala.

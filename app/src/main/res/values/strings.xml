@@ -1,34 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Alexa</string>
+    <string name="app_name">Zuri</string>
     <string name="status_idle">Toque nas ondas e fale</string>
     <string name="status_listening">Ouvindo…</string>
     <string name="status_processing">Entendendo…</string>
     <string name="status_speaking">Falando…</string>
     <string name="nothing_playing">Nada tocando no momento</string>
-    <string name="continuous_mode">Sempre ouvindo (diga \"Alexa\")</string>
+    <string name="continuous_mode">Sempre ouvindo (diga \"Zuri\")</string>
     <string name="grant_media_access">Permitir mostrar a música atual</string>
-    <string name="examples">Diga \"Alexa\", espere o \"Oi\" e peça. Exemplos: \"tocar Matuê\" · \"músicas do Henrique e Juliano\" · \"próxima\" · \"pausar\" · \"volume 50%\" · \"que horas são?\" · \"timer de 5 minutos\" · \"despertador às 7\" · \"liga a lanterna\" · \"abrir WhatsApp\" · \"conta uma piada\" · \"pode parar de ouvir\"</string>
-    <string name="continuous_hint">Funciona com a tela apagada. Uma notificação fixa mostra que a Alexa está ouvindo.</string>
+    <string name="examples">Diga \"Zuri\", espere o \"Oi\" e peça. Exemplos: \"tocar Matuê\" · \"músicas do Henrique e Juliano\" · \"próxima\" · \"pausar\" · \"volume 50%\" · \"que horas são?\" · \"timer de 5 minutos\" · \"despertador às 7\" · \"liga a lanterna\" · \"abrir WhatsApp\" · \"conta uma piada\" · \"pode parar de ouvir\"</string>
+    <string name="continuous_hint">Funciona com a tela apagada. Uma notificação fixa mostra que a Zuri está ouvindo.</string>
     <string name="auto_bluetooth">Ligar sozinha com a caixa Bluetooth</string>
-    <string name="auto_bluetooth_hint">Conectou a caixa → a Alexa começa a ouvir. Desconectou → para, e poupa a bateria.</string>
-    <string name="grant_overlay">Permitir que a Alexa ligue sozinha (exibir sobre outros apps)</string>
-    <string name="set_assistant">Usar a Alexa como assistente do celular</string>
-    <string name="widget_label">Falar com a Alexa</string>
-    <string name="shortcut_talk">Falar com a Alexa</string>
+    <string name="auto_bluetooth_hint">Conectou a caixa → a Zuri começa a ouvir. Desconectou → para, e poupa a bateria.</string>
+    <string name="grant_overlay">Permitir que a Zuri ligue sozinha (exibir sobre outros apps)</string>
+    <string name="set_assistant">Usar a Zuri como assistente do celular</string>
+    <string name="widget_label">Falar com a Zuri</string>
+    <string name="shortcut_talk">Falar com a Zuri</string>
     <string name="shortcut_listen">Ouvir sempre</string>
-    <string name="cd_mic">Falar com a Alexa</string>
+    <string name="cd_mic">Falar com a Zuri</string>
     <string name="cd_prev">Música anterior</string>
     <string name="cd_play_pause">Tocar ou pausar</string>
     <string name="cd_next">Próxima música</string>
     <string name="cd_vol_up">Aumentar volume</string>
     <string name="cd_vol_down">Diminuir volume</string>
     <string name="settings">Configurações</string>
-    <string name="tablet_mode">Modo tablet: tela sempre ligada e Alexa sempre ativa</string>
+    <string name="tablet_mode">Modo tablet: tela sempre ligada e Zuri sempre ativa</string>
     <string name="tablet_mode_hint">Liga sozinha quando o tablet reinicia. Ideal para deixar o tablet fixo, na tomada.</string>
-    <string name="battery_exempt">Não deixar o Android fechar a Alexa (bateria sem restrições)</string>
+    <string name="battery_exempt">Não deixar o Android fechar a Zuri (bateria sem restrições)</string>
     <string name="update_now">Atualizar</string>
     <string name="check_update">Procurar atualização</string>
     <string name="youtube_in_app">YouTube: tocar no app Morphe (sem propaganda)</string>
-    <string name="youtube_in_app_hint">Desligado: toca na tela da Alexa, com propaganda. Ligado: toca no app Morphe, sem propaganda, mas ele aparece por alguns segundos.</string>
+    <string name="youtube_in_app_hint">Desligado: toca na tela da Zuri, com propaganda. Ligado: toca no app Morphe, sem propaganda, mas ele aparece por alguns segundos.</string>
 </resources>

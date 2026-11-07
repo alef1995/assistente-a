@@ -12,7 +12,7 @@ import com.alef.assistentea.core.EmbeddedPlayer
 import org.json.JSONArray
 
 /**
- * Player oficial do YouTube ("IFrame Player API") dentro da tela da Alexa.
+ * Player oficial do YouTube ("IFrame Player API") dentro da tela da Zuri.
  *
  * A música toca aqui mesmo, num cartão de vídeo no canto da tela — sem abrir o app do YouTube.
  * O YouTube exige que o player fique visível (não pode ser escondido), por isso o cartão.
@@ -47,7 +47,7 @@ class EmbeddedYouTube(
         web.setBackgroundColor(0)
         web.webViewClient = WebViewClient()
         web.webChromeClient = WebChromeClient()
-        web.addJavascriptInterface(Bridge(), "Alexa")
+        web.addJavascriptInterface(Bridge(), "Zuri")
         // Uma origem https de verdade: sem ela, o YouTube recusa o player (erro 153)
         web.loadDataWithBaseURL(ORIGIN + "/assistente-a/", HTML, "text/html", "utf-8", null)
     }
@@ -147,10 +147,10 @@ class EmbeddedYouTube(
       playerVars: { autoplay: 1, playsinline: 1, controls: 0, rel: 0, modestbranding: 1,
                     iv_load_policy: 3, origin: '$ORIGIN' },
       events: {
-        onReady: function() { Alexa.onReady(); },
+        onReady: function() { Zuri.onReady(); },
         onStateChange: function(e) { report(e.data); },
         onError: function(e) {
-          Alexa.onError(e.data);
+          Zuri.onError(e.data);
           // Vídeo que não pode tocar fora do YouTube: pula para o próximo
           setTimeout(function(){ try { player.nextVideo(); } catch(x){} }, 300);
         }
@@ -163,7 +163,7 @@ class EmbeddedYouTube(
     try { t = (player.getVideoData() || {}).title || ''; } catch(x) {}
     var i = 0;
     try { i = player.getPlaylistIndex(); } catch(x) {}
-    Alexa.onState(state, i, t);
+    Zuri.onState(state, i, t);
   }
 
   function playIds(ids) {

@@ -18,10 +18,10 @@ import java.net.URLEncoder
 /**
  * Toca uma música no YouTube (Morphe) sem precisar da tela de busca dele.
  *
- *  1. A própria Alexa pesquisa no YouTube e descobre o vídeo (primeiro resultado);
+ *  1. A própria Zuri pesquisa no YouTube e descobre o vídeo (primeiro resultado);
  *  2. Tenta mandar tocar pelo canal de "carro" do YouTube (Android Auto), sem abrir o app;
  *  3. Se o YouTube não aceitar, abre direto no vídeo — já tocando, em modo "mix" para continuar
- *     com músicas parecidas — e a Alexa volta para a frente assim que o som começar.
+ *     com músicas parecidas — e a Zuri volta para a frente assim que o som começar.
  */
 class YouTubePlayer(private val context: Context, private val pkg: String) {
 

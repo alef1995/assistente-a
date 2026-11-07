@@ -1,6 +1,6 @@
 package com.alef.assistentea.core
 
-/** Player de música dentro da própria tela da Alexa (YouTube embutido). */
+/** Player de música dentro da própria tela da Zuri (YouTube embutido). */
 interface EmbeddedPlayer {
     val isReady: Boolean
     /** Tem uma fila de músicas carregada (tocando ou pausada). */

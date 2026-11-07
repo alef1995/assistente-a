@@ -32,7 +32,7 @@ class WakeWordDetector(private val context: Context, private val onText: (String
     private var service: SpeechService? = null
     private var loading = false
 
-    /** O modelo não pôde ser carregado: a Alexa volta a usar o Google para esperar o "A". */
+    /** O modelo não pôde ser carregado: a Zuri volta a usar o Google para esperar o "A". */
     var failed = false
         private set
 
@@ -44,14 +44,12 @@ class WakeWordDetector(private val context: Context, private val onText: (String
 
     companion object {
         /**
-         * Como "Alexa" pode aparecer para um reconhecedor em português.
+         * Como "Zuri" pode aparecer para um reconhecedor em português.
          * Só as que existirem no vocabulário do modelo são usadas.
          */
         private val CANDIDATES = listOf(
-            "alexa", "alexia", "aléxia", "alécia", "aleixa", "alessa", "alesa", "alex",
-            "lexa", "lessa", "aleksa",
-            "alex a", "a lexa", "a lessa", "a lesa", "a leça", "a leque", "a lécia", "a lécio",
-            "ei alexa", "ok alexa"
+            "zuri", "zury", "zúri", "suri", "júri", "juri", "zurique", "zurich",
+            "zu ri", "su ri", "ei zuri", "oi zuri"
         )
     }
 
@@ -174,7 +172,7 @@ class WakeWordDetector(private val context: Context, private val onText: (String
         if (grammarMode) {
             val words = text.split(" ").filter { it.isNotBlank() && it != "[unk]" }
             if (words.isEmpty()) return
-            text = "alexa"
+            text = "zuri"
         }
         if (!final) {
             if (text == lastPartial) return // o Vosk repete o mesmo parcial várias vezes

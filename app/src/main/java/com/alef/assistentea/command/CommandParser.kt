@@ -9,29 +9,29 @@ import java.util.Locale
  * Funciona por palavras-chave, sem IA: é rápido, previsível e funciona offline.
  *
  * Para errar menos, antes de procurar as palavras-chave a frase passa por três correções:
- *  1. o nome "Alexa" é reconhecido mesmo quando vem escrito errado ("Alexia", "Alessa", "a lexa");
+ *  1. o nome "Zuri" é reconhecido mesmo quando vem escrito errado ("Zury", "Suri", "zu ri");
  *  2. erros comuns do reconhecedor viram a palavra certa ("posar" → "pausar");
  *  3. palavras de comando com uma letra trocada são aproximadas ("pausr" → "pausar").
  * O nome da música, depois de "tocar", é sempre usado exatamente como foi ouvido.
  */
 object CommandParser {
 
-    // Palavra de ativação "Alexa" e como os reconhecedores costumam escrevê-la:
-    // alexa, alexia, aleixa, alessa, alesa, alecsa, aleksa, olexa, lexa, alex, "a lexa", "alex a"...
-    private val WAKE_TOKEN = Regex("^((a|o|ha)l[ei]|ele)i?(x|ks|cs|ss|s|ch|k|z)[iy]?a$|^lexa$|^alex$|^aleks$|^alexas$")
-    private val WAKE_JOINED = Regex("^(a|o)l[ei]i?(x|ks|cs|ch|k)[iy]?a$")
+    // Palavra de ativação "Zuri" e como os reconhecedores costumam escrevê-la:
+    // zuri, zury, suri, júri, zurique, "zu ri"...
+    private val WAKE_TOKEN = Regex("^(zu|su|ju|zo)r[iy]$|^zurique$|^zurich$|^zuris$")
+    private val WAKE_JOINED = Regex("^(zu|su)r[iy]$")
     private val WAKE_FILLERS = setOf("ei", "oi", "ok", "hey", "hei", "e", "o", "ow", "ah")
 
-    /** Quantos tokens a partir de [i] formam o nome "Alexa" (0 = não é o nome). */
+    /** Quantos tokens a partir de [i] formam o nome "Zuri" (0 = não é o nome). */
     private fun wakeLength(tokens: List<String>, i: Int): Int {
         val t = tokens.getOrNull(i) ?: return 0
-        // Nome partido em dois ("a lexa", "alex a"): só com o som de "x", para não confundir com "a lisa"
+        // Nome partido em dois ("zu ri")
         if (i + 1 < tokens.size && WAKE_JOINED.matches(t + tokens[i + 1])) return 2
         if (WAKE_TOKEN.matches(t)) return 1
         return 0
     }
 
-    /** Fim do nome no começo da frase ("Alexa, ...", "Ei Alexa ..."), ou -1. */
+    /** Fim do nome no começo da frase ("Zuri, ...", "Ei Zuri ..."), ou -1. */
     private fun wakeEnd(tokens: List<String>): Int {
         wakeLength(tokens, 0).let { if (it > 0) return it }
         if (tokens.firstOrNull() in WAKE_FILLERS) wakeLength(tokens, 1).let { if (it > 0) return 1 + it }
@@ -39,9 +39,9 @@ object CommandParser {
     }
 
     /**
-     * Procura o nome "Alexa" em qualquer ponto do texto (usado pelo reconhecedor offline,
+     * Procura o nome "Zuri" em qualquer ponto do texto (usado pelo reconhecedor offline,
      * que pode ouvir pedaços da música antes do nome). Retorna o que veio depois do nome
-     * (vazio se foi só "Alexa"), ou null se o nome não apareceu.
+     * (vazio se foi só "Zuri"), ou null se o nome não apareceu.
      */
     fun findWake(raw: String): String? {
         val original = Regex("[\\p{L}\\p{N}%]+").findAll(raw).map { it.value }.toList()

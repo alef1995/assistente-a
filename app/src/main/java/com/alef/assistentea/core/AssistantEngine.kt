@@ -18,7 +18,7 @@ import com.alef.assistentea.voice.SpeechListener
 import com.alef.assistentea.voice.WakeWordDetector
 
 /**
- * O "cérebro" da Alexa: ouve, entende, executa e responde.
+ * O "cérebro" da Zuri: ouve, entende, executa e responde.
  *
  * Roda dentro do [com.alef.assistentea.service.AssistantService] (serviço em primeiro plano),
  * então continua funcionando com a tela apagada ou com outro app aberto.
@@ -49,7 +49,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         fun onRefresh()
     }
 
-    /** Player do YouTube dentro da tela da Alexa (quando a tela está aberta). */
+    /** Player do YouTube dentro da tela da Zuri (quando a tela está aberta). */
     var embedded: EmbeddedPlayer? = null
 
     /** O player embutido está com músicas? Então pausar/próxima/etc. vão para ele. */
@@ -74,6 +74,9 @@ class AssistantEngine(private val context: Context, private val host: Host) :
     private val device = DeviceActions(context)
     private val phoneMic = PhoneMic(context)
     private val wake = WakeWordDetector(context) { text, final -> onWakeText(text, final) }
+
+    /** Formas do nome que o reconhecedor offline está ouvindo (para conferir nas configurações). */
+    val wakeForms: List<String> get() = wake.wakeForms
 
     var state = State.IDLE
         private set
@@ -150,7 +153,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         errorsInARow = 0
         host.onContinuousChanged(on)
         if (on) {
-            showReply("Escuta contínua ligada. Comece a frase com \"Alexa\". Ex.: \"Alexa, pausar\".")
+            showReply("Escuta contínua ligada. Comece a frase com \"Zuri\". Ex.: \"Zuri, pausar\".")
             main.removeCallbacks(idleCheck)
             if (state == State.IDLE) main.postDelayed(relisten, 300)
         } else {
@@ -216,7 +219,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
 
     // ================================================================== "A" e "Oi"
 
-    /** Disparo do "Oi" logo depois de ouvir só "Alexa" (sem esperar o silêncio). */
+    /** Disparo do "Oi" logo depois de ouvir só "Zuri" (sem esperar o silêncio). */
     private val wakeTrigger = Runnable {
         if (continuous && state == State.IDLE && wake.isRunning) {
             wake.stop()
@@ -224,24 +227,24 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         }
     }
 
-    /** Texto ouvido pelo reconhecedor offline enquanto espera "Alexa". */
+    /** Texto ouvido pelo reconhecedor offline enquanto espera "Zuri". */
     private fun onWakeText(text: String, final: Boolean) {
         if (text.isEmpty() && wake.failed) {
-            // O reconhecedor offline falhou: continua esperando "Alexa" com o Google
+            // O reconhecedor offline falhou: continua esperando "Zuri" com o Google
             main.postDelayed(relisten, 500)
             return
         }
         if (!continuous || state != State.IDLE || speech.isListening || speaker.isSpeaking) return
         // Conversa ou música sem o nome: ignora e a música continua normalmente
         val rest = CommandParser.findWake(text) ?: return
-        ui?.onHeard("“Alexa”")
+        ui?.onHeard("“Zuri”")
         if (rest.isBlank()) {
-            // Só "Alexa": responde rápido, sem esperar a pessoa ficar em silêncio
+            // Só "Zuri": responde rápido, sem esperar a pessoa ficar em silêncio
             main.removeCallbacks(wakeTrigger)
             if (final) wakeTrigger.run() else main.postDelayed(wakeTrigger, 350)
             return
         }
-        // "Alexa, pausar" de uma vez: espera a frase terminar
+        // "Zuri, pausar" de uma vez: espera a frase terminar
         main.removeCallbacks(wakeTrigger)
         if (!final) return
         wake.stop()
@@ -310,7 +313,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         }
         restoreDuck()
         if (best.command == Command.WakeOnly) {
-            // "A" sozinho: "Oi!" e escuta o pedido (como a Alexa)
+            // "A" sozinho: "Oi!" e escuta o pedido (como a Zuri)
             greetAndListen()
             return
         }
@@ -323,14 +326,14 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         restoreDuck()
         setState(State.IDLE)
         if (code == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) {
-            showReply("O Android bloqueou o microfone. Abra a Alexa para liberar.", error = true)
+            showReply("O Android bloqueou o microfone. Abra a Zuri para liberar.", error = true)
             if (continuous) setContinuous(false)
             host.onMicBlocked()
             return
         }
         if (continuous && silent) {
             // Ninguém falou (inclusive depois do "Oi"): volta a esperar o "A", sem falar nada
-            if (manualTrigger) showReply("Não ouvi nada. Diga \"Alexa\" quando quiser.")
+            if (manualTrigger) showReply("Não ouvi nada. Diga \"Zuri\" quando quiser.")
             main.postDelayed(relisten, 300)
             return
         }
@@ -384,7 +387,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
                     e != null && e.isActive && e.title != null -> reply("Está tocando ${e.title}.")
                     t != null -> reply("Está tocando ${t.title}" + (t.artist?.let { ", de $it" } ?: "") + ".")
                     !media.hasNotificationAccess() ->
-                        reply("Para eu saber o nome da música, abra a Alexa e toque em \"Permitir mostrar a música atual\".")
+                        reply("Para eu saber o nome da música, abra a Zuri e toque em \"Permitir mostrar a música atual\".")
                     else -> reply("Não tem nenhuma música tocando agora.")
                 }
             }
@@ -480,15 +483,15 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         }
     }
 
-    /** Abre o app de música com o pedido; insiste no play e volta para a tela da Alexa quando tocar. */
+    /** Abre o app de música com o pedido; insiste no play e volta para a tela da Zuri quando tocar. */
     private fun launchPlayer(cmd: Command.Play, what: String, before: TrackInfo?) {
         run {
             when (val result = music.play(cmd.query, cmd.artist, media)) {
                 is MusicLauncher.Result.Started -> {
                     showReply("▶ $what · ${result.playerLabel}")
                     if (result.viaSession) verifySessionPlayback(cmd, before)
-                    // Abriu a tela do player: se não começar sozinho, insiste no play; volta para a Alexa quando tocar
-                    if (!result.viaSession) returnToAlexaWhenPlaying(before) {
+                    // Abriu a tela do player: se não começar sozinho, insiste no play; volta para a Zuri quando tocar
+                    if (!result.viaSession) returnToZuriWhenPlaying(before) {
                         val extras = android.os.Bundle().apply {
                             putString(android.app.SearchManager.QUERY, cmd.query)
                             putString(android.provider.MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/*")
@@ -504,12 +507,12 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         }
     }
 
-    /** YouTube (Morphe): a Alexa pesquisa, toca sem abrir o app se der, ou abre direto no vídeo. */
+    /** YouTube (Morphe): a Zuri pesquisa, toca sem abrir o app se der, ou abre direto no vídeo. */
     private fun playOnYouTube(cmd: Command.Play, what: String, before: TrackInfo?) {
         showReply("Procurando $what no YouTube…")
         val player = embedded
         if (player != null && player.isReady && !prefs.youtubeInApp) {
-            // Toca dentro da tela da Alexa, sem abrir o app do YouTube
+            // Toca dentro da tela da Zuri, sem abrir o app do YouTube
             val yt = music.youTube()
             val term = music.youTubeTerm(cmd.query, cmd.artist)
             Thread {
@@ -532,7 +535,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
                 YouTubePlayer.Outcome.PlayingInBackground -> showReply("▶ $what · YouTube")
                 is YouTubePlayer.Outcome.OpenedVideo -> {
                     showReply("▶ " + (outcome.title ?: what) + " · YouTube")
-                    returnToAlexaWhenPlaying(before)
+                    returnToZuriWhenPlaying(before)
                 }
                 YouTubePlayer.Outcome.OpenedSearch ->
                     showReply("Não consegui pesquisar (sem internet?). Abri a busca do YouTube.", error = true)
@@ -545,31 +548,43 @@ class AssistantEngine(private val context: Context, private val host: Host) :
 
     /**
      * O YouTube abre por cima da tela. No modo tablet, quando a música já estiver tocando,
-     * a tela da Alexa (ondas) volta para a frente e o YouTube (Morphe) continua tocando em segundo plano.
+     * a tela da Zuri (ondas) volta para a frente e o YouTube (Morphe) continua tocando em segundo plano.
      * Se ainda não estiver tocando (ex.: abriu só a lista de resultados), deixa o YouTube na tela.
      */
-    private fun returnToAlexaWhenPlaying(before: TrackInfo?, attempt: Int = 0, retry: (() -> Unit)? = null) {
+    private fun returnToZuriWhenPlaying(before: TrackInfo?, attempt: Int = 0, retry: (() -> Unit)? = null) {
         if (!prefs.tabletMode) return
         main.postDelayed({
+            val canSee = media.hasNotificationAccess()
             val now = media.nowPlaying()
             val started = now != null && now.playing && (before == null || now.title != before.title || !before.playing)
             when {
-                started -> try {
-                    context.startActivity(
-                        android.content.Intent(context, com.alef.assistentea.MainActivity::class.java)
-                            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or
-                                android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-                    )
-                } catch (_: Exception) {
-                }
-                attempt < 12 -> {
+                // Começou a tocar → volta para as ondas
+                started -> bringZuriToFront()
+                // Sem "mostrar a música atual" não dá para ver se tocou: insiste no play e volta mesmo assim
+                !canSee && attempt >= 5 -> bringZuriToFront()
+                attempt < 10 -> {
                     // O app abriu mas não deu play: pede de novo (já com ele aberto, costuma funcionar)
-                    if (attempt == 3 || attempt == 7) retry?.invoke()
-                    returnToAlexaWhenPlaying(before, attempt + 1, retry)
+                    if (attempt == 3 || attempt == 6) retry?.invoke()
+                    returnToZuriWhenPlaying(before, attempt + 1, retry)
                 }
-                else -> showReply("Se a música não começou, toque nela no app de música.")
+                else -> {
+                    // Desistiu de esperar: volta para as ondas de qualquer jeito
+                    bringZuriToFront()
+                    if (!musicPlaying()) showReply("A música não começou. Tente pedir de novo.", error = true)
+                }
             }
         }, if (attempt == 0) 2000L else 1000L)
+    }
+
+    private fun bringZuriToFront() {
+        try {
+            context.startActivity(
+                android.content.Intent(context, com.alef.assistentea.MainActivity::class.java)
+                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or
+                        android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+            )
+        } catch (_: Exception) {
+        }
     }
 
     /**

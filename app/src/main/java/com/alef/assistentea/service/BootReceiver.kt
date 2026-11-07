@@ -8,7 +8,7 @@ import com.alef.assistentea.MainActivity
 import com.alef.assistentea.core.Prefs
 
 /**
- * Modo tablet: quando o tablet liga (ou o app é atualizado), abre a Alexa sozinha,
+ * Modo tablet: quando o tablet liga (ou o app é atualizado), abre a Zuri sozinha,
  * já ouvindo. Para abrir sem toque, o Android exige a permissão "exibir sobre outros apps";
  * sem ela, aparece uma notificação para tocar.
  */
@@ -30,6 +30,6 @@ class BootReceiver : BroadcastReceiver() {
             } catch (_: Exception) {
             }
         }
-        Activation.notifyTapToActivate(context, "Toque para a Alexa voltar a ouvir.")
+        Activation.notifyTapToActivate(context, "Toque para a Zuri voltar a ouvir.")
     }
 }
