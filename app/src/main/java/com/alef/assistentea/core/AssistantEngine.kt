@@ -10,6 +10,7 @@ import com.alef.assistentea.media.MediaControl
 import com.alef.assistentea.media.TrackInfo
 import com.alef.assistentea.media.VolumeController
 import com.alef.assistentea.music.MusicLauncher
+import com.alef.assistentea.music.YouTubePlayer
 import com.alef.assistentea.voice.PhoneMic
 import com.alef.assistentea.voice.Speaker
 import com.alef.assistentea.voice.SpeechListener
@@ -445,6 +446,10 @@ class AssistantEngine(private val context: Context, private val host: Host) :
         val what = cmd.artist ?: cmd.query
         val before = media.nowPlaying()
         reply("Tocando $what.") {
+            if (music.usesYouTube()) {
+                playOnYouTube(cmd, what, before)
+                return@reply
+            }
             when (val result = music.play(cmd.query, cmd.artist, media)) {
                 is MusicLauncher.Result.Started -> {
                     showReply("▶ $what · ${result.playerLabel}")
@@ -456,6 +461,25 @@ class AssistantEngine(private val context: Context, private val host: Host) :
                 MusicLauncher.Result.NoPlayer ->
                     reply("Não encontrei um app de música. Instale o Spotify ou o YouTube Music.", error = true)
             }
+        }
+    }
+
+    /** YouTube (Morphe): a Alexa pesquisa, toca sem abrir o app se der, ou abre direto no vídeo. */
+    private fun playOnYouTube(cmd: Command.Play, what: String, before: TrackInfo?) {
+        showReply("Procurando $what no YouTube…")
+        music.youTube().play(music.youTubeTerm(cmd.query, cmd.artist)) { outcome ->
+            when (outcome) {
+                YouTubePlayer.Outcome.PlayingInBackground -> showReply("▶ $what · YouTube")
+                is YouTubePlayer.Outcome.OpenedVideo -> {
+                    showReply("▶ " + (outcome.title ?: what) + " · YouTube")
+                    returnToAlexaWhenPlaying(before)
+                }
+                YouTubePlayer.Outcome.OpenedSearch ->
+                    showReply("Não consegui pesquisar (sem internet?). Abri a busca do YouTube.", error = true)
+                YouTubePlayer.Outcome.Failed ->
+                    reply("Não consegui abrir o YouTube.", error = true)
+            }
+            ui?.onRefresh()
         }
     }
 
@@ -478,10 +502,10 @@ class AssistantEngine(private val context: Context, private val host: Host) :
                     )
                 } catch (_: Exception) {
                 }
-                attempt < 3 -> returnToAlexaWhenPlaying(before, attempt + 1)
+                attempt < 12 -> returnToAlexaWhenPlaying(before, attempt + 1)
                 else -> showReply("Se a música não começou, toque nela no YouTube.")
             }
-        }, if (attempt == 0) 6000L else 3000L)
+        }, if (attempt == 0) 2000L else 1000L)
     }
 
     /**

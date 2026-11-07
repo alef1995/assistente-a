@@ -75,11 +75,16 @@ class MusicLauncher(private val context: Context) {
         return next
     }
 
+    /** O player escolhido é o YouTube (Morphe)? Nesse caso use [youTube] em vez de [play]. */
+    fun usesYouTube(): Boolean = preferredPlayer?.packageName == MORPHE_YOUTUBE.packageName
+
+    /** Termo de busca no YouTube: para artista, pede "músicas" para vir uma sequência. */
+    fun youTubeTerm(query: String, artist: String?): String = artist?.let { "$it músicas" } ?: query
+
+    fun youTube(): YouTubePlayer = YouTubePlayer(context, MORPHE_YOUTUBE.packageName)
+
     fun play(query: String, artist: String?, media: MediaControl? = null): Result {
-        // YouTube Morphe escolhido (padrão quando instalado): toda música vai para ele
-        if (preferredPlayer?.packageName == MORPHE_YOUTUBE.packageName) {
-            return playOnYouTube(MORPHE_YOUTUBE, query, artist)
-        }
+        if (usesYouTube()) return playOnYouTube(MORPHE_YOUTUBE, query, artist)
 
         // 0) Player de música já aberto (ex.: Spotify) que aceita o pedido pela sessão de mídia:
         //    toca sem abrir a tela dele.

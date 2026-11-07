@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Internet: pesquisar a música no YouTube -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Microfone para ouvir os comandos -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Ajustar o volume de mídia e usar o microfone da caixa Bluetooth -->
