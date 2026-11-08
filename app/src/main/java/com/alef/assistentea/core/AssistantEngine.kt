@@ -76,7 +76,7 @@ class AssistantEngine(private val context: Context, private val host: Host) :
     private val device = DeviceActions(context)
     private val phoneMic = PhoneMic(context)
     private val ai = AiBrain(context, prefs)
-    private val wake = WakeWordDetector(context) { text, final -> onWakeText(text, final) }
+    private val wake = WakeWordDetector(context, { Prefs(context).wakeSensitivity }) { text, final -> onWakeText(text, final) }
 
     /** Formas do nome que o reconhecedor offline está ouvindo (para conferir nas configurações). */
     val wakeForms: List<String> get() = wake.wakeForms
@@ -97,6 +97,11 @@ class AssistantEngine(private val context: Context, private val host: Host) :
     private var lastReplyError = false
     /** O próximo pedido vem logo depois do "Oi": uma frase solta ("Alcione") vira "tocar Alcione". */
     private var afterGreeting = false
+
+    /** Aplica a nova sensibilidade do nome (reinicia a espera pelo "Zuri"). */
+    fun reloadWake() {
+        if (wake.isRunning) { wake.stop(); main.post(relisten) }
+    }
 
     /** Volta a esperar o "A". */
     private val relisten = Runnable {

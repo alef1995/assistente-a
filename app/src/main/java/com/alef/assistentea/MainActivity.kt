@@ -148,6 +148,13 @@ class MainActivity : Activity(), AssistantEngine.Ui {
         findViewById<ImageButton>(R.id.settingsButton).setOnClickListener { showSettings(true) }
         findViewById<ImageButton>(R.id.closeSettings).setOnClickListener { showSettings(false) }
 
+        findViewById<android.widget.RadioGroup>(R.id.wakeSensitivity).apply {
+            check(when (prefs.wakeSensitivity) { 0 -> R.id.wakeLow; 2 -> R.id.wakeHigh; else -> R.id.wakeNormal })
+            setOnCheckedChangeListener { _, id ->
+                prefs.wakeSensitivity = when (id) { R.id.wakeLow -> 0; R.id.wakeHigh -> 2; else -> 1 }
+                engine?.reloadWake()
+            }
+        }
         findViewById<Switch>(R.id.screenSaverSwitch).apply {
             isChecked = prefs.screenSaver
             setOnCheckedChangeListener { _, checked -> prefs.screenSaver = checked; applyTabletMode() }

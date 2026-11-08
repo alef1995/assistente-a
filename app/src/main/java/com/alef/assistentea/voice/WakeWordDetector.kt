@@ -24,7 +24,11 @@ import org.vosk.android.StorageService
  * nomes de músicas e artistas.
  */
 /** [onText] recebe o texto ouvido e se é o resultado final da frase (false = parcial, ainda falando). */
-class WakeWordDetector(private val context: Context, private val onText: (String, Boolean) -> Unit) {
+class WakeWordDetector(
+    private val context: Context,
+    private val sensitivity: () -> Int,
+    private val onText: (String, Boolean) -> Unit
+) {
 
     private val main = Handler(Looper.getMainLooper())
     private var model: Model? = null
@@ -47,10 +51,16 @@ class WakeWordDetector(private val context: Context, private val onText: (String
          * Como "Zuri" pode aparecer para um reconhecedor em português.
          * Só as que existirem no vocabulário do modelo são usadas.
          */
-        private val CANDIDATES = listOf(
-            "zuri", "zury", "zúri", "suri", "júri", "juri", "zurique", "zurich",
-            "zu ri", "su ri", "ei zuri", "oi zuri"
-        )
+        private val CANDIDATES = listOf("zuri", "zury", "zúri", "ei zuri", "oi zuri")
+
+        /** Parecidas com "Zuri" — só entram se não houver "zuri" no modelo ou na sensibilidade alta.
+         *  ("júri" é palavra comum e causava disparos à toa.) */
+        private val LOOKALIKES = listOf("suri", "zurique", "zu ri", "su ri", "júri", "juri")
+
+        private val WAKE_WORD = Regex("^(zu|su|ju|jú|zú|zo)r[iy]$|^zurique$|^zurich$")
+
+        /** Confiança mínima do reconhecedor na palavra "Zuri", por sensibilidade. */
+        private val MIN_CONF = doubleArrayOf(0.97, 0.90, 0.75)
 
         /**
          * Comandos simples que podem vir logo depois do nome, de uma vez só ("Zuri, volume três").
@@ -78,7 +88,9 @@ class WakeWordDetector(private val context: Context, private val onText: (String
     private fun grammar(): String? {
         val vocab = readVocabulary()
         fun known(phrase: String) = vocab == null || phrase.split(" ").all { it in vocab }
-        val forms = CANDIDATES.filter(::known)
+        val main = CANDIDATES.filter(::known)
+        val strict = sensitivity() < 2 && main.any { !it.contains(' ') }
+        val forms = if (strict) main else main + LOOKALIKES.filter(::known)
         wakeForms = forms
         if (forms.isEmpty()) return null
         val commands = COMMANDS.filter(::known)
@@ -131,7 +143,9 @@ class WakeWordDetector(private val context: Context, private val onText: (String
         return try {
             val g = grammar()
             val rec = if (g != null) Recognizer(m, 16000.0f, g) else Recognizer(m, 16000.0f)
+            try { rec.setWords(true) } catch (_: Throwable) {}
             grammarMode = g != null
+            level = sensitivity().coerceIn(0, 2)
             val s = SpeechService(rec, 16000.0f)
             lastPartial = ""
             s.startListening(listener)
@@ -180,14 +194,39 @@ class WakeWordDetector(private val context: Context, private val onText: (String
 
     private var lastPartial = ""
     private var grammarMode = false
+    private var level = 1
+
+    /**
+     * Confere se o "Zuri" ouvido é de verdade:
+     *  - a confiança do reconhecedor na palavra precisa ser alta;
+     *  - nas sensibilidades baixa/normal, o nome no meio de uma frase (fala ou letra de música
+     *    antes E depois) é ignorado — chamar a Zuri é dizer o nome e dar uma pausa ou um comando.
+     */
+    private fun accept(obj: JSONObject, text: String): Boolean {
+        val tokens = text.split(" ").filter { it.isNotBlank() }
+        val idx = tokens.indexOfFirst { WAKE_WORD.matches(it) }
+        if (idx < 0) return true // sem o nome: o motor ignora sozinho
+        if (level < 2) {
+            val before = tokens.take(idx).any { it == "[unk]" }
+            val after = tokens.getOrNull(idx + 1) == "[unk]"
+            if (before && after) return false
+            if (level == 0 && before) return false
+        }
+        val words = obj.optJSONArray("result") ?: return level == 2
+        for (i in 0 until words.length()) {
+            val w = words.optJSONObject(i) ?: continue
+            if (WAKE_WORD.matches(w.optString("word"))) return w.optDouble("conf", 0.0) >= MIN_CONF[level]
+        }
+        return level == 2
+    }
 
     private fun deliver(json: String?, key: String, final: Boolean) {
-        var text = try {
-            JSONObject(json ?: return).optString(key)
-        } catch (_: Exception) {
-            return
-        }
+        val obj = try { JSONObject(json ?: return) } catch (_: Exception) { return }
+        var text = obj.optString(key)
         if (text.isBlank()) return
+        // Parciais não têm confiança: só a sensibilidade alta age antes da frase terminar
+        if (!final && level < 2) return
+        if (final && !accept(obj, text)) { lastPartial = ""; return }
         // Modo "só o nome (+ comando)": o que não é [unk] é o nome, às vezes seguido de um comando
         if (grammarMode) {
             val words = text.split(" ").filter { it.isNotBlank() && it != "[unk]" }

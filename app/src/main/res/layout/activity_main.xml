@@ -448,6 +448,53 @@
                 android:textColor="@color/text_dim"
                 android:textSize="13sp" />
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:text="Sensibilidade do nome “Zuri”"
+                android:textColor="@color/text"
+                android:textSize="16sp" />
+
+            <RadioGroup
+                android:id="@+id/wakeSensitivity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/wakeLow"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="Baixa"
+                    android:textColor="@color/text" />
+
+                <RadioButton
+                    android:id="@+id/wakeNormal"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="Normal"
+                    android:textColor="@color/text" />
+
+                <RadioButton
+                    android:id="@+id/wakeHigh"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="Alta"
+                    android:textColor="@color/text" />
+            </RadioGroup>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Ativando à toa com outras palavras? Use Baixa. Não atende quando você chama de longe? Use Alta."
+                android:textColor="@color/text_dim"
+                android:textSize="13sp" />
+
             <Switch
                 android:id="@+id/continuousSwitch"
                 android:layout_width="match_parent"

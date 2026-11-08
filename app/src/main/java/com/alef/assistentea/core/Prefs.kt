@@ -51,4 +51,9 @@ class Prefs(context: Context) {
     var wakeBeep: Boolean
         get() = sp.getBoolean("wake_beep", true)
         set(v) = sp.edit().putBoolean("wake_beep", v).apply()
+
+    /** Sensibilidade do nome: 0 = baixa (quase nunca dispara sozinha), 1 = normal, 2 = alta (entende de longe). */
+    var wakeSensitivity: Int
+        get() = sp.getInt("wake_sensitivity", 1)
+        set(v) = sp.edit().putInt("wake_sensitivity", v.coerceIn(0, 2)).apply()
 }
